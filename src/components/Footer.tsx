@@ -125,7 +125,7 @@ export default function FooterPremium() {
                       autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.currentTarget.value)}
-                      placeholder="seuemail@exemplo.com"
+                      placeholder="globalrj@gmail.com"
                       className="w-full rounded-xl border border-white/10 bg-white/5 px-9 py-3 text-sm text-white placeholder:text-white/40 outline-none ring-0 focus:border-cyan-300/40"
                     />
                   </div>
@@ -156,8 +156,11 @@ export default function FooterPremium() {
                 <span>contato@rjglobal.com</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-white/50" />
-                <span>São Paulo, Brasil</span>
+                <MapPin className="h-6 w-6 text-white/50" />
+                <span>
+                  Rua Seminário Bethânia , nº 44 - Todos os Santos, Cel.
+                  Fabriciano - MG
+                </span>
               </div>
             </div>
           </div>
