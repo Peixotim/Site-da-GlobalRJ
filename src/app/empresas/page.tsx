@@ -18,8 +18,6 @@ import {
   LucideIcon,
   Sparkles,
   ArrowRight,
-  MessageCircle,
-  Mail,
   CheckCircle2,
 } from "lucide-react";
 import { companies as DATA } from "@/data/companies";
@@ -250,8 +248,6 @@ function CompanyCard({ c }: { c: Company }) {
   );
 }
 
-/* ============== Mega CTA (novo) ============== */
-/* ============== CTA final (novo) ============== */
 function FinalCTA() {
   return (
     <section className="mx-auto my-16 w-full max-w-[1200px]">
