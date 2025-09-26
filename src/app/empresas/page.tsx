@@ -1,4 +1,4 @@
-// app/empresas/page.tsx (ou onde você usa)
+// app/empresas/page.tsx
 "use client";
 
 import Image from "next/image";
@@ -27,7 +27,7 @@ import { companies as DATA } from "@/data/companies";
 import type { Company, CompanyCategory } from "@/data/companies";
 
 /* =========================
-   Constantes de animação
+   Constantes de animação (sutis)
 ========================= */
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -41,7 +41,7 @@ const gridItem: Variants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.38, ease: EASE },
+    transition: { duration: 0.34, ease: EASE },
   },
 };
 
@@ -54,8 +54,8 @@ const Aurora = React.memo(function Aurora() {
       className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       aria-hidden
     >
-      <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_85%_-10%,rgba(124,58,237,0.14),transparent)]" />
-      <div className="absolute left-1/2 top-0 h-[120vh] w-[140vw] -translate-x-1/2 -rotate-[8deg] bg-[conic-gradient(from_220deg_at_50%_50%,rgba(34,211,238,0.10),rgba(168,85,247,0.12),rgba(34,211,238,0.10))] opacity-45" />
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_85%_-10%,rgba(124,58,237,0.12),transparent)]" />
+      <div className="absolute left-1/2 top-0 h-[120vh] w-[140vw] -translate-x-1/2 -rotate-[8deg] bg-[conic-gradient(from_220deg_at_50%_50%,rgba(34,211,238,0.10),rgba(168,85,247,0.12),rgba(34,211,238,0.10))] opacity-35" />
     </div>
   );
 });
@@ -89,11 +89,10 @@ const SegmentedTabs = React.memo(function SegmentedTabs({
       const wrap = trackRef.current;
       if (!wrap) return;
       requestAnimationFrame(() => {
-        const { width } = t.getBoundingClientRect();
-        const left =
-          t.getBoundingClientRect().left - wrap.getBoundingClientRect().left;
+        const { width, left } = t.getBoundingClientRect();
+        const baseLeft = wrap.getBoundingClientRect().left;
         wrap.style.setProperty("--w", `${width}px`);
-        wrap.style.setProperty("--x", `${left}px`);
+        wrap.style.setProperty("--x", `${left - baseLeft}px`);
       });
     },
     [onChange]
@@ -133,8 +132,6 @@ const SegmentedTabs = React.memo(function SegmentedTabs({
 
 /* =========================
    HeroSpotlight — LCP rápido
-   - Skeleton shimmer sem state (via ref)
-   - priority, decoding async, object-cover
 ========================= */
 const HeroSpotlight = React.memo(function HeroSpotlight({ c }: { c: Company }) {
   const reduce = useReducedMotion();
@@ -145,19 +142,17 @@ const HeroSpotlight = React.memo(function HeroSpotlight({ c }: { c: Company }) {
       initial={{ opacity: 0, y: 10, scale: 0.992 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.4 }}
-      transition={{ duration: 0.38, ease: EASE }}
+      transition={{ duration: 0.34, ease: EASE }}
       whileHover={reduce ? undefined : { y: -2 }}
       className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] ring-1 ring-white/5 shadow-[0_12px_36px_rgba(0,0,0,.35)] content-visibility-auto [contain:layout_paint]"
     >
-      {/* Glow leve */}
       <div
         className="pointer-events-none absolute inset-0 rounded-3xl"
         aria-hidden
       >
-        <div className="h-full w-full rounded-3xl bg-[conic-gradient(from_180deg_at_50%_50%,rgba(34,211,238,.32),rgba(168,85,247,.36),rgba(34,211,238,.32))] opacity-55" />
+        <div className="h-full w-full rounded-3xl bg-[conic-gradient(from_180deg_at_50%_50%,rgba(34,211,238,.26),rgba(168,85,247,.30),rgba(34,211,238,.26))] opacity-55" />
       </div>
 
-      {/* Imagem LCP + shimmer controlado por ref (sem re-render) */}
       <div className="relative aspect-[16/9] w-full overflow-hidden">
         <div
           ref={shimmerRef}
@@ -175,9 +170,9 @@ const HeroSpotlight = React.memo(function HeroSpotlight({ c }: { c: Company }) {
           onLoadingComplete={() => {
             const el = shimmerRef.current;
             if (el) {
-              el.style.transition = "opacity .3s ease";
+              el.style.transition = "opacity .28s ease";
               el.style.opacity = "0";
-              setTimeout(() => el.remove(), 400);
+              setTimeout(() => el.remove(), 360);
             }
           }}
         />
@@ -218,49 +213,18 @@ const BladeDivider = React.memo(function BladeDivider() {
   );
 });
 
-const TrustBar = React.memo(function TrustBar({
-  logos,
-}: {
-  logos: { src: string; alt: string }[];
-}) {
-  return (
-    <section
-      aria-label="Parcerias e confiança"
-      className="mx-auto -mt-2 mb-8 sm:mb-10 w-full max-w-[1200px] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.05] p-4 ring-1 ring-white/10"
-    >
-      <div className="mb-2 flex items-center gap-2 text-sm text-white/80">
-        <ShieldCheck className="h-4 w-4 text-teal-300" /> Parceria & confiança
-      </div>
-      <div className="flex flex-wrap gap-3">
-        {logos.slice(0, 12).map((l) => (
-          <div
-            key={`${l.alt}-logo`}
-            className="flex h-10 items-center justify-center rounded-xl bg-white/8 px-3 ring-1 ring-white/10"
-          >
-            <Image
-              src={l.src}
-              alt={l.alt}
-              width={110}
-              height={24}
-              className="h-6 w-auto opacity-90"
-              sizes="110px"
-              decoding="async"
-              loading="lazy"
-            />
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-});
-
 /* =========================
-   Card da grid
+   Card da grid (agora linka p/ detalhes)
 ========================= */
 const CompanyCard = React.memo(function CompanyCard({ c }: { c: Company }) {
   return (
     <m.article variants={gridItem}>
-      <div className="group relative overflow-hidden rounded-2xl bg-white/[0.06] p-[1px] ring-1 ring-white/10 transition-transform duration-300 will-change-transform hover:-translate-y-1">
+      <Link
+        href={`/empresas/${c.slug}`}
+        prefetch={false}
+        aria-label={`Abrir detalhes da empresa ${c.name}`}
+        className="group block relative overflow-hidden rounded-2xl bg-white/[0.06] p-[1px] ring-1 ring-white/10 transition-transform duration-300 will-change-transform hover:-translate-y-1"
+      >
         <div className="pointer-events-none absolute inset-0 rounded-2xl [mask:linear-gradient(#000,transparent_80%)]">
           <div className="h-full w-full rounded-2xl bg-[conic-gradient(from_180deg_at_50%_50%,rgba(34,211,238,.42),rgba(168,85,247,.48),rgba(34,211,238,.42))] opacity-55" />
         </div>
@@ -308,9 +272,15 @@ const CompanyCard = React.memo(function CompanyCard({ c }: { c: Company }) {
                 ))}
               </ul>
             ) : null}
+
+            <div className="pt-1">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[11px] text-white/80 ring-1 ring-white/15">
+                Ver empresa <ArrowRight size={14} />
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </Link>
     </m.article>
   );
 });
@@ -330,7 +300,7 @@ const FinalCTA = React.memo(function FinalCTA() {
           <m.span
             initial={{ x: "-30%" }}
             animate={{ x: "130%" }}
-            transition={{ repeat: Infinity, duration: 3.8, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 3.6, ease: "linear" }}
             className="absolute left-0 top-0 h-px w-1/4 bg-gradient-to-r from-transparent via-white/40 to-transparent"
           />
         </div>
@@ -388,9 +358,9 @@ const FinalCTA = React.memo(function FinalCTA() {
           <div className="relative">
             <div className="rounded-2xl border border-white/10 bg-black/35 p-4 ring-1 ring-white/10 backdrop-blur-sm">
               <div className="flex items-start gap-3">
-                <div className="relative h-18 w-18 overflow-hidden rounded-full ring-white/10">
+                <div className="relative h-14 w-28 overflow-hidden rounded-full ring-white/10">
                   <Image
-                    src="/homem.jpg"
+                    src="/consultores/marcos.png"
                     alt="Depoimento"
                     fill
                     sizes="96px"
@@ -495,7 +465,6 @@ export default function PageEmpresas() {
         </section>
 
         <BladeDivider />
-        <TrustBar logos={trust} />
 
         {/* GRID */}
         <section className="mx-auto w-full max-w-[1200px] content-visibility-auto [contain:layout_paint]">
