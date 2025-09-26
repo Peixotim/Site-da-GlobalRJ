@@ -43,14 +43,14 @@ const CONFIG: HeroConfig = {
 };
 
 /* =======================
-   Visual constants (inalteradas)
+   Visual constants (desktop intacto)
 ======================= */
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 const STAGE = {
   width: 1080,
   rotateDeg: -9,
-  liftYrem: 4, // traduz -translate-y-16
+  liftYrem: 4,
 } as const;
 
 const CARD = {
@@ -74,9 +74,8 @@ const cardRise: Variants = {
 
 /* =======================
    Component principal
-   - Usa LazyMotion/domAnimation para carregar só o necessário
-   - Subcomponentes memoizados para evitar re-render
-   - Mantém aparência e API originais
+   - Desktop: exatamente igual
+   - Mobile: esconde stack de cards e exibe 1 card compacto
 ======================= */
 export default function HeroSection() {
   const {
@@ -103,26 +102,41 @@ export default function HeroSection() {
               <Ctas primary={ctaPrimary} secondary={ctaSecondary} />
             </div>
 
-            <CardsStage>
-              {cards.slice(0, 4).map((src, i) => (
-                <m.div
-                  key={src}
-                  variants={cardRise}
-                  custom={i}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, amount: 0.35 }}
-                  className="relative select-none drop-shadow-[0_24px_70px_rgba(0,0,0,0.5)] will-change-transform"
-                  style={{ zIndex: 40 - i, marginLeft: i === 0 ? 0 : -26 }}
-                >
-                  <CardFrame src={src} index={i} />
-                </m.div>
-              ))}
-              <TrianglesOverlay />
-            </CardsStage>
+            {/* Desktop/Large: stage original intacto */}
+            <div className="hidden lg:block">
+              <CardsStage>
+                {cards.slice(0, 4).map((src, i) => (
+                  <m.div
+                    key={src}
+                    variants={cardRise}
+                    custom={i}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, amount: 0.35 }}
+                    className="relative select-none drop-shadow-[0_24px_70px_rgba(0,0,0,0.5)] will-change-transform"
+                    style={{ zIndex: 40 - i, marginLeft: i === 0 ? 0 : -26 }}
+                  >
+                    <CardFrame src={src} index={i} />
+                  </m.div>
+                ))}
+                <TrianglesOverlay />
+              </CardsStage>
+            </div>
+
+            {/* Mobile/Tablet: esconder stack e mostrar 1 card compacto */}
+            <div className="lg:hidden">
+              <MobileCard
+                src={cards[0] ?? "/cardsHome/card.webp"}
+                title="RJGLOBAL"
+                tag="Destaque"
+              />
+            </div>
           </div>
 
-          <BaseRibbon />
+          {/* Fita mantém em desktop. Em mobile fica oculta para reduzir pintura */}
+          <div className="hidden sm:block">
+            <BaseRibbon />
+          </div>
         </div>
       </section>
     </LazyMotion>
@@ -240,7 +254,6 @@ const CardsStage = memo(function CardsStage({
 }: {
   children: React.ReactNode;
 }) {
-  // usa classes responsivas para altura, evitando style injection e reflows
   return (
     <div className="relative h-[480px] sm:h-[540px]">
       <div className="absolute -inset-x-6 -bottom-6 h-28 rounded-full bg-gradient-to-r from-fuchsia-500/20 to-cyan-400/20 blur-2xl" />
@@ -296,6 +309,57 @@ const CardFrame = memo(function CardFrame({
         />
       </div>
     </m.div>
+  );
+});
+
+const MobileCard = memo(function MobileCard({
+  title,
+  tag,
+}: {
+  src: string;
+  title: string;
+  tag: string;
+}) {
+  return (
+    <div className="relative mx-auto w-full max-w-[440px]">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/70 ring-1 ring-white/5 shadow-xl">
+        <div className="flex items-center justify-between px-4 pt-4">
+          <div>
+            <div className="text-[11px] font-semibold tracking-wide text-white/60">
+              Educação & Tecnologia
+            </div>
+            <div className="text-base font-bold text-white">{title}</div>
+          </div>
+          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-teal-300/20 to-fuchsia-400/20 px-2.5 py-1 text-[11px] font-semibold text-teal-200 ring-1 ring-teal-300/25">
+            {tag}
+          </span>
+        </div>
+        <div className="relative mt-3 aspect-[16/9] w-full">
+          <Image
+            src={"/globalRj.webp"}
+            alt={title}
+            fill
+            sizes="(min-width: 1024px) 720px, 100vw"
+            className="select-none object-cover"
+            priority
+            draggable={false}
+          />
+        </div>
+        <div className="flex items-center justify-between px-4 py-4">
+          <div className="text-[11px] text-white/60">
+            Infra moderna • Segurança • Escalabilidade
+          </div>
+          <div
+            className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"
+            aria-hidden
+          />
+        </div>
+      </div>
+      <div
+        className="pointer-events-none absolute -inset-x-10 -bottom-8 h-16 rounded-full bg-gradient-to-r from-fuchsia-500/20 to-cyan-400/20 blur-xl"
+        aria-hidden
+      />
+    </div>
   );
 });
 
