@@ -182,7 +182,7 @@ export default function FooterPremium() {
             </span>
             <div className="flex flex-wrap items-center gap-4">
               <Link
-                href="#"
+                href="/termos"
                 className="hover:text-white transition-colors"
                 aria-label="Termos de uso"
               >
