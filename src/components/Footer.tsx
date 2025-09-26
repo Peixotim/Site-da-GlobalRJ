@@ -190,7 +190,7 @@ export default function FooterPremium() {
               </Link>
               <span className="hidden text-white/20 sm:inline">•</span>
               <Link
-                href="#"
+                href="/politica-de-privacidade"
                 className="hover:text-white transition-colors"
                 aria-label="Política de privacidade"
               >
