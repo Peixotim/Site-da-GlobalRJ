@@ -91,8 +91,8 @@ export default function FooterPremium() {
           <NavColumn
             title="Empresas"
             links={[
-              { label: "Pós-Graduação", href: "#" },
-              { label: "Cursos Técnicos", href: "#" },
+              { label: "Pós-Graduação", href: "/empresas" },
+              { label: "Cursos Técnicos", href: "/empresas" },
               { label: "Parceiros", href: "#" },
               { label: "Carreiras", href: "#" },
             ]}
