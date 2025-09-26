@@ -287,7 +287,7 @@ export default function TermosPage() {
                   </li>
                   <li>
                     <Link
-                      href="/cookies"
+                      href="/politica-de-cookies"
                       className="group inline-flex items-center gap-1 rounded-lg px-3 py-2 text-white/80 hover:bg-white/10 hover:text-white"
                     >
                       Política de Cookies
