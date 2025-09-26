@@ -50,7 +50,7 @@ const POLICIES = [
     title: "Política Anticorrupção",
     desc: "Compromisso com integridade e combate a práticas ilícitas.",
     icon: <Scale className="h-6 w-6 text-emerald-300" />,
-    href: "/anticorrupcao",
+    href: "/politica-de-anticorrupcao",
   },
 ] as const;
 
