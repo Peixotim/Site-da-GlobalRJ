@@ -3,11 +3,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion, type Variants } from "framer-motion";
+import React, { memo } from "react";
+import {
+  LazyMotion,
+  domAnimation,
+  m,
+  type Variants,
+  useReducedMotion,
+} from "framer-motion";
 import { ArrowRight, GraduationCap } from "lucide-react";
 
 /* =======================
-   Config & Types
+   Config & Types (inalterados)
 ======================= */
 type Cta = Readonly<{ label: string; href: string }>;
 
@@ -36,7 +43,7 @@ const CONFIG: HeroConfig = {
 };
 
 /* =======================
-   Visual constants
+   Visual constants (inalteradas)
 ======================= */
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -44,7 +51,6 @@ const STAGE = {
   width: 1080,
   rotateDeg: -9,
   liftYrem: 4, // traduz -translate-y-16
-  containerH: { base: 480, sm: 540 },
 } as const;
 
 const CARD = {
@@ -54,7 +60,7 @@ const CARD = {
 } as const;
 
 /* =======================
-   Animations
+   Animations (inalteradas)
 ======================= */
 const cardRise: Variants = {
   hidden: (i: number) => ({ opacity: 0, y: 140 + i * 8, scale: 0.96 }),
@@ -67,7 +73,10 @@ const cardRise: Variants = {
 };
 
 /* =======================
-   Component
+   Component principal
+   - Usa LazyMotion/domAnimation para carregar só o necessário
+   - Subcomponentes memoizados para evitar re-render
+   - Mantém aparência e API originais
 ======================= */
 export default function HeroSection() {
   const {
@@ -81,47 +90,49 @@ export default function HeroSection() {
   } = CONFIG;
 
   return (
-    <section className="px-4 sm:px-6 lg:px-8">
-      <div className="relative mx-auto mt-6 w-full max-w-[1540px] overflow-hidden rounded-[32px] border border-white/30">
-        <Background image={bgImage} />
+    <LazyMotion features={domAnimation} strict>
+      <section className="px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto mt-6 w-full max-w-[1540px] overflow-hidden rounded-[32px] border border-white/30">
+          <Background image={bgImage} />
 
-        <div className="relative grid grid-cols-1 items-center gap-6 px-6 py-12 sm:gap-8 sm:px-10 sm:py-14 lg:grid-cols-[1.35fr_1.65fr] lg:py-16">
-          <div className="z-10 max-w-xl">
-            <Eyebrow text={eyebrow} />
-            <Title lines={titleLines} />
-            <Subtitle text={subtitle} />
-            <Ctas primary={ctaPrimary} secondary={ctaSecondary} />
+          <div className="relative grid grid-cols-1 items-center gap-6 px-6 py-12 sm:gap-8 sm:px-10 sm:py-14 lg:grid-cols-[1.35fr_1.65fr] lg:py-16">
+            <div className="z-10 max-w-xl">
+              <Eyebrow text={eyebrow} />
+              <Title lines={titleLines} />
+              <Subtitle text={subtitle} />
+              <Ctas primary={ctaPrimary} secondary={ctaSecondary} />
+            </div>
+
+            <CardsStage>
+              {cards.slice(0, 4).map((src, i) => (
+                <m.div
+                  key={src}
+                  variants={cardRise}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.35 }}
+                  className="relative select-none drop-shadow-[0_24px_70px_rgba(0,0,0,0.5)] will-change-transform"
+                  style={{ zIndex: 40 - i, marginLeft: i === 0 ? 0 : -26 }}
+                >
+                  <CardFrame src={src} index={i} />
+                </m.div>
+              ))}
+              <TrianglesOverlay />
+            </CardsStage>
           </div>
 
-          <CardsStage>
-            {cards.slice(0, 4).map((src, i) => (
-              <motion.div
-                key={src}
-                variants={cardRise}
-                custom={i}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.35 }}
-                className="relative select-none drop-shadow-[0_24px_70px_rgba(0,0,0,0.5)]"
-                style={{ zIndex: 40 - i, marginLeft: i === 0 ? 0 : -26 }}
-              >
-                <CardFrame src={src} index={i} />
-              </motion.div>
-            ))}
-            <TrianglesOverlay />
-          </CardsStage>
+          <BaseRibbon />
         </div>
-
-        <BaseRibbon />
-      </div>
-    </section>
+      </section>
+    </LazyMotion>
   );
 }
 
 /* =======================
-   Subcomponents
+   Subcomponents (memoizados)
 ======================= */
-function Background({ image }: { image: string }) {
+const Background = memo(function Background({ image }: { image: string }) {
   return (
     <div className="absolute inset-0 -z-10" aria-hidden>
       <Image
@@ -136,11 +147,11 @@ function Background({ image }: { image: string }) {
       <div className="absolute right-[-8%] top-[4%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.22)_0%,rgba(20,3,38,0)_48%)]" />
     </div>
   );
-}
+});
 
-function Eyebrow({ text }: { text: string }) {
+const Eyebrow = memo(function Eyebrow({ text }: { text: string }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -153,13 +164,13 @@ function Eyebrow({ text }: { text: string }) {
       <span className="text-base font-semibold tracking-tight text-cyan-500">
         {text}
       </span>
-    </motion.div>
+    </m.div>
   );
-}
+});
 
-function Title({ lines }: { lines: string[] }) {
+const Title = memo(function Title({ lines }: { lines: string[] }) {
   return (
-    <motion.h1
+    <m.h1
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -171,13 +182,13 @@ function Title({ lines }: { lines: string[] }) {
           {line}
         </span>
       ))}
-    </motion.h1>
+    </m.h1>
   );
-}
+});
 
-function Subtitle({ text }: { text: string }) {
+const Subtitle = memo(function Subtitle({ text }: { text: string }) {
   return (
-    <motion.p
+    <m.p
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -185,13 +196,19 @@ function Subtitle({ text }: { text: string }) {
       className="mt-4 max-w-lg text-white/70"
     >
       {text}
-    </motion.p>
+    </m.p>
   );
-}
+});
 
-function Ctas({ primary, secondary }: { primary: Cta; secondary: Cta }) {
+const Ctas = memo(function Ctas({
+  primary,
+  secondary,
+}: {
+  primary: Cta;
+  secondary: Cta;
+}) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -214,13 +231,18 @@ function Ctas({ primary, secondary }: { primary: Cta; secondary: Cta }) {
       >
         {secondary.label}
       </Link>
-    </motion.div>
+    </m.div>
   );
-}
+});
 
-function CardsStage({ children }: { children: React.ReactNode }) {
+const CardsStage = memo(function CardsStage({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // usa classes responsivas para altura, evitando style injection e reflows
   return (
-    <div className="relative" style={{ height: STAGE.containerH.base }}>
+    <div className="relative h-[480px] sm:h-[540px]">
       <div className="absolute -inset-x-6 -bottom-6 h-28 rounded-full bg-gradient-to-r from-fuchsia-500/20 to-cyan-400/20 blur-2xl" />
       <div
         className="absolute bottom-0 right-[-16%] isolate origin-bottom-right"
@@ -231,30 +253,28 @@ function CardsStage({ children }: { children: React.ReactNode }) {
       >
         <div className="relative flex translate-y-2">{children}</div>
       </div>
-
-      {/* altura responsiva sm */}
-      <style jsx>{`
-        @media (min-width: 640px) {
-          div[style*="height: ${STAGE.containerH.base}px"] {
-            height: ${STAGE.containerH.sm}px !important;
-          }
-        }
-      `}</style>
     </div>
   );
-}
+});
 
-function CardFrame({ src, index }: { src: string; index: number }) {
+const CardFrame = memo(function CardFrame({
+  src,
+  index,
+}: {
+  src: string;
+  index: number;
+}) {
+  const reduce = useReducedMotion();
   const w = CARD.width[index] ?? CARD.width[0];
   const r = CARD.rotateDeg[index] ?? 0;
   const fy = CARD.floatY[index] ?? 0;
 
   return (
-    <motion.div
-      animate={{ y: fy }}
+    <m.div
+      animate={reduce ? undefined : { y: fy }}
       transition={{ duration: 0.6, ease: EASE }}
       style={{ width: w }}
-      className="relative"
+      className="relative will-change-transform"
     >
       <div
         className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/70 ring-1 ring-white/5"
@@ -272,15 +292,16 @@ function CardFrame({ src, index }: { src: string; index: number }) {
           sizes={`${w}px`}
           className="h-auto w-full object-cover"
           priority={index === 0}
+          loading={index === 0 ? undefined : "lazy"}
         />
       </div>
-    </motion.div>
+    </m.div>
   );
-}
+});
 
-function BaseRibbon() {
+const BaseRibbon = memo(function BaseRibbon() {
   return (
-    <motion.div
+    <m.div
       initial={{ y: 60, opacity: 0 }}
       whileInView={{ y: 0, opacity: 1 }}
       viewport={{ once: true, amount: 0.2 }}
@@ -306,11 +327,11 @@ function BaseRibbon() {
           fill="url(#rgRJ)"
         />
       </svg>
-    </motion.div>
+    </m.div>
   );
-}
+});
 
-function TrianglesOverlay() {
+const TrianglesOverlay = memo(function TrianglesOverlay() {
   return (
     <div
       className="pointer-events-none absolute -bottom-8 left-0 right-0"
@@ -355,4 +376,4 @@ function TrianglesOverlay() {
       </svg>
     </div>
   );
-}
+});
