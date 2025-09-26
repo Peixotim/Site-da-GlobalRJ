@@ -39,17 +39,33 @@ export default function HeaderBasic() {
       {/* Container principal para o conteúdo do header */}
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo RJGLOBAL */}
-        <Link href="/" className="relative h-14 md:h-16 aspect-square shrink-0">
-          <Image
-            src="/globalrj.webp"
-            alt="RJGLOBAL"
-            fill
-            sizes="(max-width:768px) 56px, (max-width:1024px) 64px, 64px"
-            className="object-contain"
-            priority
-          />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -inset-y-1 -inset-x-2 rounded-xl
+                   bg-gradient-to-r from-cyan-400/0 via-cyan-400/15 to-fuchsia-500/0
+                   opacity-0 blur-md transition-opacity duration-400 group-hover:opacity-100"
+        />
+        <Link
+          href="/"
+          aria-label="RJGLOBAL — Início"
+          className={`group relative flex items-center `}
+        >
+          {/* Wordmark responsiva (nada de aspect-square) */}
+          <span className="relative block w-[150px] sm:w-[190px] md:w-[230px] lg:w-[270px]">
+            <Image
+              src="/rjglobalHorizontal.webp"
+              alt="Grupo RJGLOBAL — Educação & Tecnologia"
+              width={924} // dimensões nativas da imagem (para evitar CLS)
+              height={266}
+              priority
+              sizes="(max-width:640px) 150px,
+                 (max-width:768px) 190px,
+                 (max-width:1024px) 230px,
+                 270px"
+              className="h-auto w-full select-none"
+            />
+          </span>
         </Link>
-
         {/* Navegação principal para desktop */}
         {/* Usamos 'hidden md:flex flex-grow justify-center' para centralizar a navegação no desktop */}
         <div className="hidden md:flex flex-grow justify-center">
@@ -147,19 +163,7 @@ function MobileSheet({
                 href="/"
                 onClick={onClose}
                 className="flex items-center gap-2"
-              >
-                <div className="relative h-9 w-9">
-                  <Image
-                    src="/globalrj.webp"
-                    alt="RJGLOBAL"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <span className="bg-gradient-to-r from-teal-300 via-cyan-300 to-fuchsia-400 bg-clip-text text-base font-extrabold text-transparent">
-                  RJGLOBAL
-                </span>
-              </Link>
+              ></Link>
               <button
                 onClick={onClose}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
