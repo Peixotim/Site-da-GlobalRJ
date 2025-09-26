@@ -1,3 +1,4 @@
+// app/empresas/page.tsx (ou onde você usa)
 "use client";
 
 import Image from "next/image";
@@ -25,16 +26,43 @@ import {
 import { companies as DATA } from "@/data/companies";
 import type { Company, CompanyCategory } from "@/data/companies";
 
-/* =====================================================
-   PERFORMANCE ESTRUTURAL
-   - LazyMotion para carregar apenas animações necessárias
-   - Components memoizados para evitar re-renderizações
-   - Handlers com useCallback
-   - Redução de efeitos pesados (blur) e melhor uso de CSS vars
-   - Tamanhos/sizes otimizados nas imagens para evitar CLS
-   ===================================================== */
+/* =========================
+   Constantes de animação
+========================= */
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-/* ============== UI: tabs e animações otimizadas ============== */
+const gridWrap: Variants = {
+  hidden: { opacity: 0, y: 6 },
+  show: { opacity: 1, y: 0, transition: { staggerChildren: 0.045 } },
+};
+const gridItem: Variants = {
+  hidden: { opacity: 0, y: 12, scale: 0.99 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.38, ease: EASE },
+  },
+};
+
+/* =========================
+   Aurora (leve)
+========================= */
+const Aurora = React.memo(function Aurora() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      aria-hidden
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_85%_-10%,rgba(124,58,237,0.14),transparent)]" />
+      <div className="absolute left-1/2 top-0 h-[120vh] w-[140vw] -translate-x-1/2 -rotate-[8deg] bg-[conic-gradient(from_220deg_at_50%_50%,rgba(34,211,238,0.10),rgba(168,85,247,0.12),rgba(34,211,238,0.10))] opacity-45" />
+    </div>
+  );
+});
+
+/* =========================
+   Tabs
+========================= */
 const TABS: ReadonlyArray<{
   key: "all" | CompanyCategory;
   label: string;
@@ -45,32 +73,6 @@ const TABS: ReadonlyArray<{
   { key: "tecnico", label: "Técnicos", Icon: Wrench },
 ];
 
-const gridWrap: Variants = {
-  hidden: { opacity: 0, y: 6 },
-  show: { opacity: 1, y: 0, transition: { staggerChildren: 0.05 } },
-};
-const gridItem: Variants = {
-  hidden: { opacity: 0, y: 12, scale: 0.99 },
-  show: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
-  },
-};
-
-/* ============== Decor Aurora (leve) ============== */
-const Aurora = React.memo(function Aurora() {
-  return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      {/* Substitui blur pesado por gradientes com opacidade controlada */}
-      <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_85%_-10%,rgba(124,58,237,0.14),transparent)]" />
-      <div className="absolute left-1/2 top-0 h-[120vh] w-[140vw] -translate-x-1/2 -rotate-[8deg] bg-[conic-gradient(from_220deg_at_50%_50%,rgba(34,211,238,0.10),rgba(168,85,247,0.12),rgba(34,211,238,0.10))] opacity-45" />
-    </div>
-  );
-});
-
-/* ============== Segmented Tabs ============== */
 const SegmentedTabs = React.memo(function SegmentedTabs({
   active,
   onChange,
@@ -83,16 +85,15 @@ const SegmentedTabs = React.memo(function SegmentedTabs({
   const handleClick = useCallback(
     (key: "all" | CompanyCategory, e: React.MouseEvent<HTMLButtonElement>) => {
       onChange(key);
-      // Evita layout thrash: calcula e aplica no próximo frame
       const t = e.currentTarget;
       const wrap = trackRef.current;
       if (!wrap) return;
       requestAnimationFrame(() => {
-        const tw = t.getBoundingClientRect().width;
-        const tl =
+        const { width } = t.getBoundingClientRect();
+        const left =
           t.getBoundingClientRect().left - wrap.getBoundingClientRect().left;
-        wrap.style.setProperty("--w", `${tw}px`);
-        wrap.style.setProperty("--x", `${tl}px`);
+        wrap.style.setProperty("--w", `${width}px`);
+        wrap.style.setProperty("--x", `${left}px`);
       });
     },
     [onChange]
@@ -112,6 +113,7 @@ const SegmentedTabs = React.memo(function SegmentedTabs({
           style={{ width: "var(--w, 110px)", left: "var(--x, 4px)" }}
         />
       </AnimatePresence>
+
       {TABS.map(({ key, label, Icon }) => (
         <button
           key={key}
@@ -129,30 +131,55 @@ const SegmentedTabs = React.memo(function SegmentedTabs({
   );
 });
 
-/* ============== Destaque (hero) ============== */
+/* =========================
+   HeroSpotlight — LCP rápido
+   - Skeleton shimmer sem state (via ref)
+   - priority, decoding async, object-cover
+========================= */
 const HeroSpotlight = React.memo(function HeroSpotlight({ c }: { c: Company }) {
   const reduce = useReducedMotion();
+  const shimmerRef = useRef<HTMLDivElement>(null);
+
   return (
     <m.div
-      initial={{ opacity: 0, y: 12, scale: 0.992 }}
+      initial={{ opacity: 0, y: 10, scale: 0.992 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.4 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.38, ease: EASE }}
       whileHover={reduce ? undefined : { y: -2 }}
-      className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] ring-1 ring-white/5 shadow-[0_12px_36px_rgba(0,0,0,.35)]"
+      className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] ring-1 ring-white/5 shadow-[0_12px_36px_rgba(0,0,0,.35)] content-visibility-auto [contain:layout_paint]"
     >
-      <div className="pointer-events-none absolute inset-0 rounded-3xl">
-        <div className="h-full w-full rounded-3xl bg-[conic-gradient(from_180deg_at_50%_50%,rgba(34,211,238,.35),rgba(168,85,247,.38),rgba(34,211,238,.35))] opacity-55" />
+      {/* Glow leve */}
+      <div
+        className="pointer-events-none absolute inset-0 rounded-3xl"
+        aria-hidden
+      >
+        <div className="h-full w-full rounded-3xl bg-[conic-gradient(from_180deg_at_50%_50%,rgba(34,211,238,.32),rgba(168,85,247,.36),rgba(34,211,238,.32))] opacity-55" />
       </div>
 
+      {/* Imagem LCP + shimmer controlado por ref (sem re-render) */}
       <div className="relative aspect-[16/9] w-full overflow-hidden">
+        <div
+          ref={shimmerRef}
+          className="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,#111_0%,#1a1a1a_40%,#111_60%)] bg-[length:200%_100%]"
+          aria-hidden
+        />
         <Image
           src={c.cover}
           alt={c.name}
           fill
           priority
+          decoding="async"
           sizes="(min-width:1024px) 720px, 100vw"
           className="object-cover"
+          onLoadingComplete={() => {
+            const el = shimmerRef.current;
+            if (el) {
+              el.style.transition = "opacity .3s ease";
+              el.style.opacity = "0";
+              setTimeout(() => el.remove(), 400);
+            }
+          }}
         />
       </div>
 
@@ -165,6 +192,7 @@ const HeroSpotlight = React.memo(function HeroSpotlight({ c }: { c: Company }) {
             height={24}
             className="h-6 w-auto"
             sizes="72px"
+            decoding="async"
           />
           <div>
             <h4 className="text-sm font-semibold text-white">{c.name}</h4>
@@ -179,10 +207,12 @@ const HeroSpotlight = React.memo(function HeroSpotlight({ c }: { c: Company }) {
   );
 });
 
-/* ============== Divider + Trust ============== */
+/* =========================
+   Divisor + Trust
+========================= */
 const BladeDivider = React.memo(function BladeDivider() {
   return (
-    <div className="relative my-12">
+    <div className="relative my-10 sm:my-12" aria-hidden>
       <div className="pointer-events-none mx-auto -mt-2 h-px w-[92%] bg-white/10" />
     </div>
   );
@@ -196,7 +226,7 @@ const TrustBar = React.memo(function TrustBar({
   return (
     <section
       aria-label="Parcerias e confiança"
-      className="mx-auto -mt-2 mb-10 w-full max-w-[1200px] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.05] p-4 ring-1 ring-white/10"
+      className="mx-auto -mt-2 mb-8 sm:mb-10 w-full max-w-[1200px] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.05] p-4 ring-1 ring-white/10"
     >
       <div className="mb-2 flex items-center gap-2 text-sm text-white/80">
         <ShieldCheck className="h-4 w-4 text-teal-300" /> Parceria & confiança
@@ -214,6 +244,8 @@ const TrustBar = React.memo(function TrustBar({
               height={24}
               className="h-6 w-auto opacity-90"
               sizes="110px"
+              decoding="async"
+              loading="lazy"
             />
           </div>
         ))}
@@ -222,13 +254,15 @@ const TrustBar = React.memo(function TrustBar({
   );
 });
 
-/* ============== Card da grade ============== */
+/* =========================
+   Card da grid
+========================= */
 const CompanyCard = React.memo(function CompanyCard({ c }: { c: Company }) {
   return (
     <m.article variants={gridItem}>
       <div className="group relative overflow-hidden rounded-2xl bg-white/[0.06] p-[1px] ring-1 ring-white/10 transition-transform duration-300 will-change-transform hover:-translate-y-1">
         <div className="pointer-events-none absolute inset-0 rounded-2xl [mask:linear-gradient(#000,transparent_80%)]">
-          <div className="h-full w-full rounded-2xl bg-[conic-gradient(from_180deg_at_50%_50%,rgba(34,211,238,.45),rgba(168,85,247,.5),rgba(34,211,238,.45))] opacity-55" />
+          <div className="h-full w-full rounded-2xl bg-[conic-gradient(from_180deg_at_50%_50%,rgba(34,211,238,.42),rgba(168,85,247,.48),rgba(34,211,238,.42))] opacity-55" />
         </div>
 
         <div className="relative rounded-2xl border border-white/10 bg-zinc-950/60 ring-1 ring-white/5 shadow-[0_12px_36px_rgba(0,0,0,.35)]">
@@ -238,6 +272,7 @@ const CompanyCard = React.memo(function CompanyCard({ c }: { c: Company }) {
               alt={c.name}
               fill
               loading="lazy"
+              decoding="async"
               sizes="(min-width:1024px) 380px, (min-width:640px) 50vw, 100vw"
               className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
             />
@@ -249,13 +284,16 @@ const CompanyCard = React.memo(function CompanyCard({ c }: { c: Company }) {
                 height={16}
                 className="h-4 w-auto"
                 sizes="64px"
+                decoding="async"
               />
               {c.category === "pos" ? "Pós-Graduação" : "Técnico"}
             </div>
           </div>
 
-          <div className="space-y-3 px-5 py-4">
-            <h3 className="text-lg font-semibold text-white">{c.name}</h3>
+          <div className="space-y-3 px-4 sm:px-5 py-4">
+            <h3 className="text-base sm:text-lg font-semibold text-white">
+              {c.name}
+            </h3>
             <p className="line-clamp-2 text-sm text-white/70">{c.tagline}</p>
 
             {c.highlights?.length ? (
@@ -277,12 +315,17 @@ const CompanyCard = React.memo(function CompanyCard({ c }: { c: Company }) {
   );
 });
 
-/* ============== Mega CTA final ============== */
+/* =========================
+   Mega CTA
+========================= */
 const FinalCTA = React.memo(function FinalCTA() {
   return (
-    <section className="mx-auto my-16 w-full max-w-[1200px]">
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] p-6 ring-1 ring-white/10 md:p-10">
-        <div className="pointer-events-none absolute inset-0 rounded-3xl">
+    <section className="mx-auto my-14 sm:my-16 w-full max-w-[1200px]">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] p-5 sm:p-6 md:p-10 ring-1 ring-white/10">
+        <div
+          className="pointer-events-none absolute inset-0 rounded-3xl"
+          aria-hidden
+        >
           <div className="absolute inset-0 bg-[radial-gradient(900px_360px_at_85%_-10%,rgba(168,85,247,.16),transparent_60%)]" />
           <m.span
             initial={{ x: "-30%" }}
@@ -299,7 +342,7 @@ const FinalCTA = React.memo(function FinalCTA() {
               Evolua seu ecossistema educacional
             </span>
 
-            <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            <h3 className="mt-3 text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white">
               Conecte Pós-Graduação e Cursos Técnicos a um{" "}
               <span className="bg-gradient-to-r from-teal-300 via-cyan-300 to-fuchsia-400 bg-clip-text text-transparent">
                 padrão de performance
@@ -350,7 +393,10 @@ const FinalCTA = React.memo(function FinalCTA() {
                     src="/homem.jpg"
                     alt="Depoimento"
                     fill
+                    sizes="96px"
                     className="object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div>
@@ -394,7 +440,9 @@ const FinalCTA = React.memo(function FinalCTA() {
   );
 });
 
-/* ============== Página ============== */
+/* =========================
+   Página
+========================= */
 export default function PageEmpresas() {
   const [active, setActive] = useState<"all" | CompanyCategory>("all");
 
@@ -403,7 +451,6 @@ export default function PageEmpresas() {
     [active]
   );
 
-  // Destaque acompanha o filtro (fallback para o primeiro da lista completa)
   const featured = filtered[0] ?? DATA[0];
 
   const trust = useMemo(
@@ -416,20 +463,20 @@ export default function PageEmpresas() {
       <main className="relative px-4 sm:px-6 lg:px-8">
         <Aurora />
 
-        {/* Hero */}
-        <div className="mx-auto w-full max-w-[1200px] py-10">
-          <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.15fr_1.35fr]">
+        {/* HERO */}
+        <section className="mx-auto w-full max-w-[1200px] py-8 sm:py-10 content-visibility-auto [contain:layout_paint] [contain-intrinsic-size:780px]">
+          <div className="grid grid-cols-1 items-start gap-8 sm:gap-10 lg:grid-cols-[1.15fr_1.35fr]">
             <div>
-              <div className="mb-4 flex items-center gap-3">
+              <div className="mb-3 sm:mb-4 flex items-center gap-3">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-emerald-400/15 ring-1 ring-emerald-400/30">
                   <Building2 className="h-4 w-4 text-emerald-300" />
                 </span>
-                <span className="text-base font-semibold tracking-tight text-emerald-300">
+                <span className="text-sm sm:text-base font-semibold tracking-tight text-emerald-300">
                   RJGLOBAL
                 </span>
               </div>
 
-              <h1 className="text-[38px] font-extrabold leading-[1.05] text-white sm:text-6xl">
+              <h1 className="text-[32px] sm:text-[38px] md:text-6xl font-extrabold leading-[1.05] text-white">
                 Empresas
               </h1>
               <p className="mt-3 max-w-xl text-white/75">
@@ -445,28 +492,30 @@ export default function PageEmpresas() {
 
             <HeroSpotlight c={featured} />
           </div>
-        </div>
+        </section>
 
         <BladeDivider />
         <TrustBar logos={trust} />
 
-        {/* Grid performática (sem key que força remounts) */}
-        <m.div
-          variants={gridWrap}
-          initial="hidden"
-          animate="show"
-          className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {filtered.map((c) => (
-            <CompanyCard key={c.slug} c={c} />
-          ))}
-        </m.div>
+        {/* GRID */}
+        <section className="mx-auto w-full max-w-[1200px] content-visibility-auto [contain:layout_paint]">
+          <m.div
+            variants={gridWrap}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {filtered.map((c) => (
+              <CompanyCard key={c.slug} c={c} />
+            ))}
+          </m.div>
 
-        {filtered.length === 0 && (
-          <div className="mx-auto mt-6 w-full max-w-[1200px] rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center text-white/70 ring-1 ring-white/10">
-            Nenhuma empresa encontrada para este filtro.
-          </div>
-        )}
+          {filtered.length === 0 && (
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center text-white/70 ring-1 ring-white/10">
+              Nenhuma empresa encontrada para este filtro.
+            </div>
+          )}
+        </section>
 
         <FinalCTA />
       </main>
