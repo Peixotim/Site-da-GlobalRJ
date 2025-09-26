@@ -13,8 +13,8 @@ const NAV: Readonly<NavItem[]> = [
   { label: "Início", href: "/" },
   { label: "Empresas", href: "/empresas" },
   { label: "Soluções", href: "/solucoes" },
-  { label: "Notícias", href: "/#noticias" },
-  { label: "Contato", href: "/#contato" },
+  { label: "Contato", href: "/contato" },
+  { label: "Politicas", href: "/politicas" },
 ];
 
 export default function HeaderBasic() {
