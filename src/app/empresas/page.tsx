@@ -423,11 +423,6 @@ export default function PageEmpresas() {
 
   const featured = filtered[0] ?? DATA[0];
 
-  const trust = useMemo(
-    () => DATA.map((c) => ({ src: c.logo, alt: c.name })),
-    []
-  );
-
   return (
     <LazyMotion features={domAnimation} strict>
       <main className="relative px-4 sm:px-6 lg:px-8">

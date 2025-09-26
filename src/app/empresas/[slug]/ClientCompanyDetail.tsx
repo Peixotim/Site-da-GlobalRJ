@@ -12,8 +12,6 @@ import {
   ShieldCheck,
   ArrowRight,
   ExternalLink,
-  MapPin,
-  BadgeCheck,
   Link2,
   Users2,
 } from "lucide-react";

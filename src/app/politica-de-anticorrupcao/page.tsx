@@ -12,7 +12,6 @@ import {
   UserX,
   Users2,
   FileSpreadsheet,
-  CircleHelp,
   Megaphone,
   TriangleAlert,
   ClipboardCheck,

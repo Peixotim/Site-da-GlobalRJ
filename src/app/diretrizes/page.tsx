@@ -14,7 +14,6 @@ import {
   HeartHandshake,
   Scale,
   Recycle,
-  Megaphone,
   ArrowRight,
   CheckCircle2,
   XCircle,
@@ -331,7 +330,7 @@ export default function DiretrizesPage() {
                   title: "Governança de dados",
                   desc: "Mapeamento de dados, DSRs e retenção mínima.",
                 },
-              ].map((s, i) => (
+              ].map((s) => (
                 <li key={s.title} className="mb-5">
                   <div className="absolute -left-[9px] mt-1 h-4 w-4 rounded-full bg-white/20 ring-2 ring-white/20" />
                   <div className="text-sm font-bold text-white">{s.title}</div>

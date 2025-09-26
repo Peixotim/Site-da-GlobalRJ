@@ -8,7 +8,7 @@ import {
   AnimatePresence,
   useReducedMotion,
 } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 
 const TIPS = [

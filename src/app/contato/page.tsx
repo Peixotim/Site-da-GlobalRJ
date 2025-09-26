@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,9 +8,7 @@ import {
   Mail,
   Phone,
   MessageSquareMore,
-  Building2,
   ShieldCheck,
-  Calendar,
   MapPin,
   ArrowRight,
   Send,
@@ -18,7 +16,6 @@ import {
   Info,
   User,
   Briefcase,
-  MessageSquare,
   Globe2,
   Linkedin,
   Sparkles,

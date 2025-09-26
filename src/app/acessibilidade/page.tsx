@@ -6,7 +6,6 @@ import {
   Accessibility,
   Keyboard,
   Contrast,
-  Type,
   MonitorSmartphone,
   Router as Landmark,
   Captions,
