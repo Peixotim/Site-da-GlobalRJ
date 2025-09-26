@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header"; // use o header que preferir
+import CookieConsent from "@/components/CookieConsent";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,7 +32,7 @@ export default function RootLayout({
           backgroundAttachment: "fixed",
         }}
       >
-        {/* Header global */}
+        <CookieConsent />
         <Header />
 
         {/* Conteúdo das páginas */}
