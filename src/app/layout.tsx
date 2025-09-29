@@ -14,6 +14,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "RJ GLOBAL",
   description: "Site da RJ GLOBAL",
+  icons:{
+    
+  }
 };
 
 export default function RootLayout({
