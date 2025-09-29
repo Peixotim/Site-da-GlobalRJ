@@ -55,7 +55,7 @@ export default function FooterPremium() {
               </span>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-white/70">
-              Educação & Tecnologia em alto nível. Plataformas robustas, seguras
+              Educação E Tecnologia em alto nível. Plataformas robustas, seguras
               e pensadas para a jornada completa do aluno.
             </p>
 
