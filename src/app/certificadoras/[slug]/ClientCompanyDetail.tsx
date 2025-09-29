@@ -3,13 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { memo, useEffect, useMemo, useRef } from "react";
-import {
-  LazyMotion,
-  domAnimation,
-  m,
-  useInView,
-  useReducedMotion,
-} from "framer-motion";
+import { LazyMotion, domAnimation, m, useInView } from "framer-motion";
 import {
   ArrowRight,
   ExternalLink,
@@ -18,7 +12,6 @@ import {
   Youtube,
   Linkedin,
   Twitter,
-  Check,
 } from "lucide-react";
 import type { Certificadora } from "@/data/certificadoras";
 
@@ -98,7 +91,6 @@ const SocialIcon: Record<
    HERO — “split” editorial: banner recortado + bloco de identidade
 ======================================================================== */
 function HeroSplit({ c }: { c: Certificadora }) {
-  const reduce = useReducedMotion();
   return (
     <section className="mx-auto mt-6 w-full max-w-[1200px]">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.4fr_1fr] items-end">

@@ -10,13 +10,7 @@ import {
   type Variants,
   useReducedMotion,
 } from "framer-motion";
-import {
-  ShieldCheck,
-  ArrowRight,
-  Sparkles,
-  Star,
-  BookOpen,
-} from "lucide-react";
+import { ShieldCheck, ArrowRight, Star, BookOpen } from "lucide-react";
 import type { Certificadora } from "@/data/certificadoras";
 import { certificadoras as DATA } from "@/data/certificadoras";
 
