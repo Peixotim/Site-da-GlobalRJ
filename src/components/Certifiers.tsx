@@ -4,17 +4,15 @@
 import Image from "next/image";
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
-  m, // Alias para motion
-  useInView,
-  useAnimation,
+  m as motion,
   type Variants,
   LazyMotion,
   domAnimation,
-  useMotionValue, // NOVO: para o efeito suave do mouse
-  useTransform, // NOVO: para o efeito suave do mouse
-  useMotionTemplate, // NOVO: para o gradiente de brilho
+  useMotionValue,
+  useTransform,
+  useMotionTemplate,
 } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, GraduationCap } from "lucide-react";
 
 /* ======================
  * Tipos + dados padrão
@@ -33,30 +31,37 @@ type Props = {
 };
 
 const DEFAULT_ITEMS: readonly CertifierItem[] = [
-  { logo: "/globalrj.webp", title: "GLOBALTEC", subtitle: "Certificadora" },
-  { logo: "/fame.webp", title: "FAME", subtitle: "Certificadora" },
+  {
+    logo: "/Certificadoras/globalrj.webp",
+    title: "GLOBALTEC",
+    subtitle: "Certificadora",
+  },
+  {
+    logo: "/Certificadoras/fame.webp",
+    title: "FAME",
+    subtitle: "Certificadora",
+  },
   {
     logo: "/Certificadoras/iguacu.webp",
     title: "FACULDADE IGUAÇU",
     subtitle: "Certificadora",
   },
+  {
+    logo: "/Certificadoras/faculeste.webp",
+    title: "FACULESTE",
+    subtitle: "Certificadora",
+  },
+  {
+    logo: "/Certificadoras/faculvale.webp",
+    title: "FACUVALE",
+    subtitle: "Certificadora",
+  },
+  {
+    logo: "/Certificadoras/educavales.webp",
+    title: "EDUCAVALES",
+    subtitle: "Certificadora",
+  },
 ];
-
-/* ======================
- * Hook utilitário
- * ====================== */
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const m = window.matchMedia(query);
-    const onChange = () => setMatches(m.matches);
-    setMatches(m.matches);
-    m.addEventListener("change", onChange);
-    return () => m.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
-}
 
 /* ======================
  * Componente principal
@@ -64,24 +69,22 @@ function useMediaQuery(query: string) {
 export default function CertifiersReveal({
   items = DEFAULT_ITEMS,
   className = "",
-  title = "Certificadoras & Acreditações",
+  title = "Certificadoras",
   eyebrow = "RJGLOBAL",
 }: Props) {
-  const isDesktop = useMediaQuery("(min-width: 1024px)"); // lg breakpoint — mantém web idêntico
-
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={domAnimation}>
       <section className={`px-6 sm:px-8 lg:px-10 ${className}`}>
         <div className="relative mx-auto w-full max-w-[1600px]">
-          {/* Cabeçalho */}
           <Header eyebrow={eyebrow} title={title} />
 
-          {/* Conteúdo responsivo */}
-          {isDesktop ? (
+          {/* Renderiza SEMPRE os dois, troca só via CSS -> sem flicker/hidratação */}
+          <div className="hidden lg:block">
             <DesktopStage items={items} />
-          ) : (
+          </div>
+          <div className="lg:hidden">
             <MobileCarousel items={items} />
-          )}
+          </div>
         </div>
       </section>
     </LazyMotion>
@@ -89,7 +92,7 @@ export default function CertifiersReveal({
 }
 
 /* ======================
- * Cabeçalho (memo)
+ * Cabeçalho
  * ====================== */
 const Header = memo(function Header({
   eyebrow,
@@ -102,7 +105,7 @@ const Header = memo(function Header({
     <div className="flex items-center justify-between px-6 py-5 sm:px-8">
       <div className="flex items-center gap-3">
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/10 ring-1 ring-white/20">
-          <span className="block h-3 w-3 rounded-full bg-gradient-to-r from-teal-300 via-cyan-300 to-fuchsia-400" />
+          <GraduationCap className="block h-5 w-5  text-gradient-to-r text-teal-300" />
         </span>
         <div className="leading-tight">
           <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
@@ -118,22 +121,25 @@ const Header = memo(function Header({
 });
 
 /* ======================
- * DESKTOP — palco original (intocado visualmente)
+ * Variants
  * ====================== */
 const container: Variants = {
-  hidden: { transition: { staggerChildren: 0.08, staggerDirection: -1 } },
-  show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.06 } },
 };
 
 const cardBase: Variants = {
-  hidden: { x: 0, y: 0, rotate: 0, scale: 0.96, opacity: 0 },
+  hidden: { opacity: 0, scale: 0.96 },
   show: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
   },
 };
 
+/* ======================
+ * DESKTOP — palco com paginação se > 3 itens
+ * ====================== */
 const DesktopStage = memo(function DesktopStage({
   items,
 }: {
@@ -145,71 +151,123 @@ const DesktopStage = memo(function DesktopStage({
     { x: 360, r: 6, z: 30 },
   ];
 
-  const stageRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(stageRef, { amount: 0.55 });
-  const controls = useAnimation();
+  const [start, setStart] = useState(0);
+  const enablePager = items.length > 3;
 
-  useEffect(() => {
-    controls.start(inView ? "show" : "hidden");
-  }, [inView, controls]);
+  // item do slot 0..2 respeitando rotação circular
+  const at = (slot: number) => items[(start + slot) % items.length];
+
+  // paginação (3 em 3)
+  const go = useCallback(
+    (dir: -1 | 1) => {
+      if (!enablePager) return;
+      setStart((s) => {
+        const len = items.length;
+        const step = 3 % len || 1; // segurança
+        return (s + (dir === 1 ? step : len - step)) % len;
+      });
+    },
+    [enablePager, items.length]
+  );
+
+  // key no container para re-disparar animação de entrada leve a cada página
+  const pageKey = Math.floor(start / 3);
 
   return (
     <div className="relative px-6 py-10 sm:px-8">
-      <m.div
-        ref={stageRef}
+      <motion.div
+        key={pageKey}
         className="relative mx-auto h-[520px] w-full max-w-[1100px]"
         variants={container}
         initial="hidden"
-        animate={controls}
+        animate="show"
       >
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[540px] w-[980px] -translate-x-1/2 -translate-y-1/2 rounded-[48px] bg-gradient-to-r from-cyan-400/10 via-fuchsia-500/12 to-cyan-400/10 blur-2xl" />
 
-        {items.slice(0, 3).map((it, i) => {
-          const t = targets[i];
+        {[0, 1, 2].map((slot) => {
+          const item = at(slot);
+          const t = targets[slot];
           const specific: Variants = {
             hidden: { ...cardBase.hidden, zIndex: t.z },
-            show: { ...cardBase.show, x: t.x, rotate: t.r, zIndex: t.z },
+            show: {
+              ...cardBase.show,
+              x: t.x,
+              rotate: t.r,
+              zIndex: t.z,
+            },
           };
+
           return (
-            <m.div
-              key={it.title}
+            <motion.div
+              key={`${item.title}-${slot}-${pageKey}`}
               variants={specific}
+              initial="hidden"
+              animate="show"
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             >
-              {/* NeonCard usa o item e os valores de mouse para animações suaves */}
-              <NeonCard item={it} />
-            </m.div>
+              <NeonCard item={item} />
+            </motion.div>
           );
         })}
-      </m.div>
+      </motion.div>
+
+      {/* Controles (apenas se tiver mais de 3) */}
+      {enablePager && (
+        <>
+          <button
+            aria-label="Anterior"
+            onClick={() => go(-1)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/8 ring-1 ring-white/15 backdrop-blur transition hover:bg-white/12 active:scale-95"
+          >
+            <ChevronLeft className="h-5 w-5 text-white" />
+          </button>
+          <button
+            aria-label="Próximo"
+            onClick={() => go(1)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/8 ring-1 ring-white/15 backdrop-blur transition hover:bg-white/12 active:scale-95"
+          >
+            <ChevronRight className="h-5 w-5 text-white" />
+          </button>
+
+          {/* Indicadores de página */}
+          <div className="mt-4 flex items-center justify-center gap-2">
+            {Array.from({ length: Math.ceil(items.length / 3) }).map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 w-4 rounded-full transition ${
+                  i === pageKey ? "bg-white" : "bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 });
 
 /* ======================
- * MOBILE — carrossel básico sem animações complexas de tilt/shine
+ * MOBILE — carrossel simples
  * ====================== */
 const MobileCarousel = memo(function MobileCarousel({
   items,
 }: {
   items: readonly CertifierItem[];
 }) {
-  const safeItems = items.length ? items : DEFAULT_ITEMS;
-  const [index, setIndex] = useState(0);
+  const safe = items.length ? items : DEFAULT_ITEMS;
+  const [i, setI] = useState(0);
 
   const prev = useCallback(
-    () => setIndex((i) => (i - 1 + safeItems.length) % safeItems.length),
-    [safeItems.length]
+    () => setI((x) => (x - 1 + safe.length) % safe.length),
+    [safe.length]
   );
   const next = useCallback(
-    () => setIndex((i) => (i + 1) % safeItems.length),
-    [safeItems.length]
+    () => setI((x) => (x + 1) % safe.length),
+    [safe.length]
   );
 
   return (
-    <div className="px-4 py-6 md:hidden">
-      {" "}
-      {/* Modificado para esconder em 'md' e acima */}
+    <div className="px-4 py-6">
       <div className="mx-auto flex w-full max-w-[420px] items-center gap-3">
         <button
           aria-label="Anterior"
@@ -220,8 +278,7 @@ const MobileCarousel = memo(function MobileCarousel({
         </button>
 
         <div className="relative mx-auto w-full">
-          {/* Card estático para mobile */}
-          <CardStatic item={safeItems[index]} />
+          <CardStatic item={safe[i]} />
         </div>
 
         <button
@@ -232,34 +289,23 @@ const MobileCarousel = memo(function MobileCarousel({
           <ChevronRight className="h-5 w-5 text-white" />
         </button>
       </div>
-      <Dots count={safeItems.length} active={index} />
-    </div>
-  );
-});
 
-const Dots = memo(function Dots({
-  count,
-  active,
-}: {
-  count: number;
-  active: number;
-}) {
-  return (
-    <div className="mt-3 flex items-center justify-center gap-2">
-      {Array.from({ length: count }).map((_, i) => (
-        <span
-          key={i}
-          className={`h-1.5 w-1.5 rounded-full ${
-            i === active ? "bg-white" : "bg-white/40"
-          }`}
-        />
-      ))}
+      <div className="mt-3 flex items-center justify-center gap-2">
+        {safe.map((_, idx) => (
+          <span
+            key={idx}
+            className={`h-1.5 w-1.5 rounded-full ${
+              idx === i ? "bg-white" : "bg-white/40"
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 });
 
 /* ======================
- * Card estático (mobile) - Sem interatividade complexa
+ * Card estático (mobile)
  * ====================== */
 const CardStatic = memo(function CardStatic({ item }: { item: CertifierItem }) {
   return (
@@ -285,11 +331,10 @@ const CardStatic = memo(function CardStatic({ item }: { item: CertifierItem }) {
 });
 
 /* ======================
- * Card com tilt/shine (desktop original) - AGORA SUAVE!
+ * Card com tilt/shine (desktop)
  * ====================== */
 const NeonCard = memo(function NeonCard({ item }: { item: CertifierItem }) {
   const ref = useRef<HTMLDivElement>(null);
-  // USAMOS useMotionValue para que o Framer Motion possa interpolar esses valores
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);
 
@@ -299,43 +344,34 @@ const NeonCard = memo(function NeonCard({ item }: { item: CertifierItem }) {
 
     const onMove = (e: MouseEvent) => {
       const r = el.getBoundingClientRect();
-      // Atualiza o MotionValue diretamente
       mx.set((e.clientX - r.left) / r.width);
       my.set((e.clientY - r.top) / r.height);
     };
-
     const onLeave = () => {
-      // Retorna para o centro suavemente
       mx.set(0.5);
       my.set(0.5);
     };
 
     el.addEventListener("mousemove", onMove);
     el.addEventListener("mouseleave", onLeave);
-
     return () => {
       el.removeEventListener("mousemove", onMove);
       el.removeEventListener("mouseleave", onLeave);
     };
-  }, [mx, my]); // mx e my são dependências
+  }, [mx, my]);
 
-  // useTransform para mapear os valores do mouse para os ângulos de rotação
-  const rotateX = useTransform(my, [0, 1], [8, -8]); // Invertido Y para rotação intuitiva
+  const rotateX = useTransform(my, [0, 1], [8, -8]);
   const rotateY = useTransform(mx, [0, 1], [-10, 10]);
-
-  // useTransform para o brilho seguir o mouse
   const shineX = useTransform(mx, [0, 1], ["0%", "100%"]);
   const shineY = useTransform(my, [0, 1], ["0%", "100%"]);
-  // useMotionTemplate para animar o background-image (gradiente)
   const glow = useMotionTemplate`radial-gradient(420px 220px at ${shineX} ${shineY}, rgba(34,211,238,0.16), rgba(168,85,247,0.12) 50%, transparent 70%)`;
 
   return (
-    <m.div // m.div é crucial para que os MotionValues sejam aplicados e interpolados
+    <motion.div
       ref={ref}
-      whileHover={{ scale: 1.03 }} // Mantém o efeito de zoom
-      // Aplica os MotionValues diretamente no estilo. Framer Motion cuidará da suavidade.
+      whileHover={{ scale: 1.03 }}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-      transition={{ type: "spring", stiffness: 420, damping: 28 }} // Transição para whileHover e o retorno do mouseleave
+      transition={{ type: "spring", stiffness: 420, damping: 28 }}
       className="relative h-[440px] w-[360px] rounded-2xl p-[1px] [perspective:1000px] transform-gpu"
     >
       {/* Borda com glow */}
@@ -351,15 +387,15 @@ const NeonCard = memo(function NeonCard({ item }: { item: CertifierItem }) {
         }}
       />
 
-      {/* Corpo do card */}
+      {/* Corpo */}
       <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/70 ring-1 ring-white/5 shadow-[0_18px_60px_rgba(0,0,0,.45)]">
-        {/* brilho que segue o mouse - AGORA TAMBÉM SUAVE */}
-        <m.div // Também precisa ser um m.div para usar useMotionTemplate com suavidade
+        {/* brilho que segue o mouse */}
+        <motion.div
           aria-hidden
           className="absolute inset-0"
-          style={{ backgroundImage: glow }} // Aplica o MotionTemplate
+          style={{ backgroundImage: glow }}
         />
-        {/* textura diagonal */}
+        {/* textura */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0.02)_30%,transparent_55%)]" />
 
         {/* conteúdo */}
@@ -380,6 +416,6 @@ const NeonCard = memo(function NeonCard({ item }: { item: CertifierItem }) {
           </div>
         </div>
       </div>
-    </m.div>
+    </motion.div>
   );
 });
