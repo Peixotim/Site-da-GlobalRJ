@@ -1,39 +1,13 @@
-// app/empresas/[slug]/page.tsx
 import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import { getAllCompanySlugs, getCompanyBySlug } from "@/data/companies";
-import ClientCompanyDetail from "./ClientCompanyDetail";
+import ClientCertDetail from "./ClientCompanyDetail";
+import { getCertificadoraBySlug, getAllCertSlugs } from "@/data/certificadoras";
 
 export async function generateStaticParams() {
-  return getAllCompanySlugs().map((slug) => ({ slug }));
+  return getAllCertSlugs().map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
-  const c = getCompanyBySlug(params.slug);
-  if (!c) return {};
-  return {
-    title: `${c.name} — Empresas | RJGLOBAL`,
-    description: c.tagline,
-    openGraph: {
-      title: c.name,
-      description: c.tagline,
-      images: c.cover ? [{ url: c.cover }] : [],
-    },
-  };
-}
-
-export default function CompanyDetailPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const c = getCompanyBySlug(params.slug);
-  if (!c) return notFound();
-
-  // Tudo que usa framer-motion fica no ClientCompanyDetail
-  return <ClientCompanyDetail company={c} />;
+export default function Page({ params }: { params: { slug: string } }) {
+  const cert = getCertificadoraBySlug(params.slug);
+  if (!cert) return notFound();
+  return <ClientCertDetail cert={cert} />; // ✅ passa 'cert' definido
 }
