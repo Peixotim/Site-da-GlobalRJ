@@ -11,7 +11,7 @@ type NavItem = { label: string; href: string };
 
 const NAV: Readonly<NavItem[]> = [
   { label: "Início", href: "/" },
-  { label: "Empresas", href: "/empresas" },
+  { label: "Certificadoras", href: "/certificadoras" },
   { label: "Soluções", href: "/solucoes" },
   { label: "Contato", href: "/contato" },
   { label: "Politicas", href: "/politicas" },
