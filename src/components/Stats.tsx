@@ -60,9 +60,7 @@ const DEFAULT_ITEMS: Readonly<StatItem[]> = [
 ];
 
 /* ===========================
-   CountUp leve (rAF, sem springs)
-   - Atualiza o DOM só quando o inteiro muda
-   - Só roda quando entra em viewport
+   CountUp (replay on re-enter)
 =========================== */
 const CountUp = memo(function CountUp({
   from,
@@ -79,19 +77,36 @@ const CountUp = memo(function CountUp({
 }) {
   const hostRef = useRef<HTMLSpanElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(wrapperRef, { once: true, amount: 0.6 });
+
+  // ❗ sem "once": false para reexecutar ao reentrar
+  const inView = useInView(wrapperRef, { once: false, amount: 0.6 });
 
   useEffect(() => {
-    if (!inView || !hostRef.current) return;
+    if (!hostRef.current) return;
+
+    // saiu do viewport → reseta o valor exibido (para reanimar ao voltar)
+    if (!inView) {
+      hostRef.current.textContent = `${prefix}${from.toLocaleString(
+        "pt-BR"
+      )}${suffix}`;
+      return;
+    }
+
+    // entrou no viewport → anima
     const start = performance.now();
     const delta = to - from;
     let raf = 0;
     let lastShown = Number.NaN;
 
+    // easing leve para ficar mais gostoso
+    const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3);
+
     const step = (t: number) => {
       const p = Math.min(1, (t - start) / duration);
-      const value = from + delta * p;
-      const shown = delta >= 1000 ? Math.round(value) : Math.floor(value);
+      const e = easeOutCubic(p);
+      const value = from + delta * e;
+      const shown =
+        Math.abs(delta) >= 1000 ? Math.round(value) : Math.floor(value);
       if (shown !== lastShown) {
         hostRef.current!.textContent = `${prefix}${shown.toLocaleString(
           "pt-BR"
@@ -115,14 +130,11 @@ const CountUp = memo(function CountUp({
 });
 
 /* ===========================
-   Cartão de estatística (memoizado)
-   - Hover só em md+ para evitar custo em mobile
-   - Sem animações infinitas
+   Cartão
 =========================== */
 const StatCard = memo(function StatCard({ item }: { item: StatItem }) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur shadow-[0_18px_60px_rgba(0,0,0,0.40)] px-4 sm:px-5 py-5 flex flex-col items-center text-center md:transition-transform md:will-change-transform md:hover:-translate-y-1">
-      {/* Borda "viva" leve (sem animação) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 rounded-2xl opacity-55"
@@ -132,7 +144,6 @@ const StatCard = memo(function StatCard({ item }: { item: StatItem }) {
           filter: "blur(8px)",
         }}
       />
-      {/* brilho radial interno (leve) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 rounded-2xl"
@@ -142,7 +153,6 @@ const StatCard = memo(function StatCard({ item }: { item: StatItem }) {
         }}
       />
 
-      {/* Conteúdo */}
       <div className="relative z-10 flex w-full flex-col items-center">
         <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/30 ring-1 ring-white/10">
           {item.icon}
@@ -171,9 +181,6 @@ const StatCard = memo(function StatCard({ item }: { item: StatItem }) {
 
 /* ===========================
    Componente principal
-   - LazyMotion/domAnimation para bundle menor
-   - Sem whileInView por item (apenas container faz fade-in)
-   - Mobile-first com grid simples
 =========================== */
 export default function Stats({
   items = DEFAULT_ITEMS,
@@ -193,13 +200,12 @@ export default function Stats({
     <LazyMotion features={domAnimation} strict>
       <section className={`px-4 sm:px-6 lg:px-8 ${className}`}>
         <div className="relative mx-auto w-full max-w-[1400px]">
-          {/* Glow de fundo (mais leve) */}
           <div className="pointer-events-none absolute -inset-x-16 -top-6 h-20 rounded-[44px] bg-[radial-gradient(60%_120%_at_50%_0%,rgba(124,58,237,0.18),rgba(34,211,238,0.14),transparent)] blur-xl" />
 
           <m.div
             initial={{ opacity: 0, y: 16, scale: 0.985 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, amount: 0.35 }}
+            viewport={{ once: false, amount: 0.35 }} // pode reaparecer suavemente também
             transition={{ duration: 0.45 }}
             style={{ scale }}
           >
