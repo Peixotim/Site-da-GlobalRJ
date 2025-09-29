@@ -12,6 +12,7 @@ import {
   Youtube,
   Linkedin,
   Twitter,
+  LucideProps,
 } from "lucide-react";
 import type { Certificadora } from "@/data/certificadoras";
 
@@ -78,7 +79,7 @@ const CountUp = memo(function CountUp({
 /* ================== Ícones de rede ================== */
 const SocialIcon: Record<
   "instagram" | "youtube" | "linkedin" | "x" | "website",
-  React.ComponentType<any>
+  React.ComponentType<LucideProps>
 > = {
   instagram: Instagram,
   youtube: Youtube,
