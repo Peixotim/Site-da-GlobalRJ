@@ -37,7 +37,7 @@ const CONFIG: Config = {
     "Somos um grupo focado em educação e tecnologia, criando produtos e experiências que aceleram a carreira de milhares de pessoas.",
     "Unimos design, engenharia e dados para entregar plataformas robustas, seguras e fáceis de usar — do onboarding ao sucesso do aluno.",
   ],
-  cta: { label: "Conheça nossas soluções", href: "/#solucoes" },
+  cta: { label: "Conheça nossas soluções", href: "/solucoes" },
   companyName: "RJGLOBAL",
   companyTag: "Educação & Tecnologia",
   mainImage: "/college.webp",
