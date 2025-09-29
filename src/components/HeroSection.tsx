@@ -336,7 +336,7 @@ const MobileCard = memo(function MobileCard({
         </div>
         <div className="relative mt-3 aspect-[16/9] w-full">
           <Image
-            src={"/globalRj.webp"}
+            src={"/globalrj.webp"}
             alt={title}
             fill
             sizes="(min-width: 1024px) 720px, 100vw"
