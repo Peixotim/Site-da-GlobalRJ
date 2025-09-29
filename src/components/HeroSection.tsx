@@ -30,7 +30,7 @@ type HeroConfig = Readonly<{
 
 const CONFIG: HeroConfig = {
   eyebrow: "RJGLOBAL",
-  titleLines: ["Grupo RJGLOBAL", "Educação & Tecnologia", "em alto nível"],
+  titleLines: ["Grupo RJGLOBAL", "Educação e Tecnologia", "em alto nível"],
   subtitle: "Conheça as empresas e explore nossos produtos",
   bgImage: "/college.webp",
   cards: [
@@ -326,7 +326,7 @@ const MobileCard = memo(function MobileCard({
         <div className="flex items-center justify-between px-4 pt-4">
           <div>
             <div className="text-[11px] font-semibold tracking-wide text-white/60">
-              Educação & Tecnologia
+              Educação E Tecnologia
             </div>
             <div className="text-base font-bold text-white">{title}</div>
           </div>
