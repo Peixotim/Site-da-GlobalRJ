@@ -156,7 +156,7 @@ export default function RootLayout({
         }}
       />
       <body
-        className="min-h-dvh text-white antialiased"
+        className="min-h-dvh text-white antialiased overflow-x-clip"
         style={{
           // mesmo visual do site, aplicado globalmente
           backgroundImage:

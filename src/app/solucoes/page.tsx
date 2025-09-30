@@ -110,11 +110,13 @@ export default function SolutionsPage() {
 
   return (
     <LazyMotion features={domAnimation} strict>
-      <main className="relative min-h-[100dvh] px-4 sm:px-6 lg:px-8">
-        {/* Aurora */}
-        <div className="pointer-events-none absolute inset-0 -z-10">
+      {/* corte garantido no eixo X */}
+      <main className="relative min-h-[100dvh] overflow-x-clip px-4 sm:px-6 lg:px-8">
+        {/* Aurora — agora contida */}
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(1100px_520px_at_90%_-10%,rgba(56,189,248,0.14),transparent)]" />
-          <div className="absolute left-1/2 top-0 h-[120vh] w-[150vw] -translate-x-1/2 -rotate-[6deg] bg-[conic-gradient(from_210deg_at_50%_50%,rgba(168,85,247,0.12),rgba(56,189,248,0.12),rgba(168,85,247,0.12))] opacity-40" />
+          {/* trocar 150vw por porcentagem do pai e manter clipping */}
+          <div className="absolute left-1/2 top-0 h-[120vh] w-[140%] -translate-x-1/2 -rotate-[6deg] bg-[conic-gradient(from_210deg_at_50%_50%,rgba(168,85,247,0.12),rgba(56,189,248,0.12),rgba(168,85,247,0.12))] opacity-40" />
         </div>
 
         {/* HERO */}
@@ -179,7 +181,7 @@ export default function SolutionsPage() {
 
         {/* QUADROS DE SOLUÇÃO */}
         <section className="mx-auto mt-8 w-full max-w-6xl">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
             {solutionBlocks.map((s, i) => (
               <m.article
                 key={s.key}
@@ -189,12 +191,14 @@ export default function SolutionsPage() {
                 transition={{ duration: 0.45, ease: EASE, delay: i * 0.03 }}
                 className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] p-5 ring-1 ring-white/10"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
                       {s.icon}
                     </span>
-                    <h3 className="text-lg font-bold text-white">{s.title}</h3>
+                    <h3 className="truncate text-lg font-bold text-white">
+                      {s.title}
+                    </h3>
                   </div>
                   <Link
                     href={s.href}
@@ -225,7 +229,8 @@ export default function SolutionsPage() {
 
         {/* PROVA DE VALOR */}
         <section className="mx-auto mt-8 w-full max-w-6xl">
-          <div className="grid items-stretch gap-6 md:grid-cols-[1.3fr_1fr]">
+          {/* use minmax(0, ...) para impedir overflow das colunas */}
+          <div className="grid min-w-0 items-stretch gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
             <m.div
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -273,7 +278,7 @@ export default function SolutionsPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.35 }}
               transition={{ duration: 0.45, ease: EASE }}
-              className="flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] p-6 ring-1 ring-white/10"
+              className="flex min-w-0 flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] p-6 ring-1 ring-white/10"
             >
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/80 ring-1 ring-white/15">
@@ -311,7 +316,7 @@ export default function SolutionsPage() {
 
         {/* DIFERENCIAIS */}
         <section className="mx-auto mt-8 w-full max-w-6xl">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 i: <ShieldCheck className="h-4 w-4 text-teal-300" />,
@@ -357,8 +362,8 @@ export default function SolutionsPage() {
             transition={{ duration: 0.5, ease: EASE }}
             className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.06] p-6 ring-1 ring-white/10 sm:p-8"
           >
-            <div className="grid items-center gap-6 md:grid-cols-[1.35fr_1fr]">
-              <div>
+            <div className="grid min-w-0 items-center gap-6 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+              <div className="min-w-0">
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/80 ring-1 ring-white/15">
                   <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
                   Acelere agora

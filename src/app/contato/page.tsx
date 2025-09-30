@@ -1,3 +1,4 @@
+// app/contato/page.tsx
 "use client";
 
 import { useRef, useState } from "react";
@@ -28,7 +29,7 @@ import {
 } from "lucide-react";
 
 /* =========================
-   Mock de consultores (troque pelos seus dados)
+   Mock de consultores
 ========================= */
 const CONSULTANTS = [
   {
@@ -46,7 +47,7 @@ const CONSULTANTS = [
 ] as const;
 
 /* =========================
-   Helpers leves
+   Helpers
 ========================= */
 const ease = [0.22, 1, 0.36, 1] as const;
 const topics = [
@@ -63,11 +64,12 @@ const topics = [
 export default function ContatoPage() {
   return (
     <LazyMotion features={domAnimation} strict>
-      <main className="relative min-h-[100dvh] px-4 sm:px-6 lg:px-8">
-        {/* Aurora sutil */}
-        <div className="pointer-events-none absolute inset-0 -z-10">
+      {/* opcional global no layout: <html className="overflow-x-clip"><body className="overflow-x-clip" /> */}
+      <main className="relative min-h-[100dvh] overflow-x-clip px-4 sm:px-6 lg:px-8">
+        {/* Aurora sutil CLIPADA */}
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(1100px_520px_at_90%_-10%,rgba(56,189,248,0.14),transparent)]" />
-          <div className="absolute left-1/2 top-0 h-[120vh] w-[150vw] -translate-x-1/2 -rotate-[6deg] bg-[conic-gradient(from_210deg_at_50%_50%,rgba(168,85,247,0.12),rgba(56,189,248,0.12),rgba(168,85,247,0.12))] opacity-40" />
+          <div className="absolute left-1/2 top-0 h-[120vh] w-[140%] -translate-x-1/2 -rotate-[6deg] bg-[conic-gradient(from_210deg_at_50%_50%,rgba(168,85,247,0.12),rgba(56,189,248,0.12),rgba(168,85,247,0.12))] opacity-40" />
         </div>
 
         {/* HERO */}
@@ -84,7 +86,7 @@ export default function ContatoPage() {
             </span>
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Fale com a{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-300 to-fuchsia-400">
+              <span className="bg-gradient-to-r from-teal-300 via-cyan-300 to-fuchsia-400 bg-clip-text text-transparent">
                 RJGLOBAL
               </span>
             </h1>
@@ -94,7 +96,7 @@ export default function ContatoPage() {
             </p>
 
             {/* Ações rápidas */}
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
               <QuickAction
                 href="mailto:contato@rjglobal.com"
                 Icon={Mail}
@@ -120,11 +122,11 @@ export default function ContatoPage() {
 
         {/* GRID principal: form + info */}
         <section className="mx-auto mt-8 w-full max-w-6xl">
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
+          <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             {/* Form */}
             <ContactForm />
 
-            {/* Lateral: áreas, consultores, horários, endereço */}
+            {/* Lateral */}
             <aside className="space-y-6">
               <AreasCards />
               <Consultants />
@@ -174,18 +176,20 @@ function QuickAction({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className="group flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-4 ring-1 ring-white/10 transition hover:bg-white/10"
+      className="group flex min-w-0 items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-4 ring-1 ring-white/10 transition hover:bg-white/10"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
           <Icon className="h-5 w-5 text-cyan-300" />
         </span>
-        <div>
-          <div className="text-sm font-semibold text-white">{label}</div>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-white">
+            {label}
+          </div>
           <div className="text-xs text-white/70">{sub}</div>
         </div>
       </div>
-      <ArrowRight className="h-4 w-4 text-white/60 transition-transform group-hover:translate-x-0.5" />
+      <ArrowRight className="h-4 w-4 shrink-0 text-white/60 transition-transform group-hover:translate-x-0.5" />
     </Link>
   );
 }
@@ -194,28 +198,23 @@ function QuickAction({
 function ContactForm() {
   const [sending, setSending] = useState(false);
   const [ok, setOk] = useState<null | "success" | "error">(null);
-
-  /* honeypot anti-spam */
-  const botRef = useRef<HTMLInputElement>(null);
+  const botRef = useRef<HTMLInputElement>(null); // honeypot
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (botRef.current?.value) return; // bot filled
+    if (botRef.current?.value) return;
 
     const fd = new FormData(e.currentTarget);
     const payload = Object.fromEntries(fd.entries());
 
     setSending(true);
     setOk(null);
-
     try {
-      // Troque pela sua rota real:
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       if (!res.ok) throw new Error("fail");
       setOk("success");
       (e.currentTarget as HTMLFormElement).reset();
@@ -307,8 +306,8 @@ function ContactForm() {
 
           <div className="sm:col-span-2 flex items-start gap-2">
             <input
-              required
               id="consent"
+              required
               type="checkbox"
               name="consent"
               className="mt-1 h-4 w-4 rounded border-white/20 bg-white/10 text-cyan-400 focus:ring-cyan-400/60"
@@ -324,9 +323,6 @@ function ContactForm() {
               .
             </label>
           </div>
-
-          {/* reCAPTCHA / hCaptcha (opcional) */}
-          {/* <div className="sm:col-span-2">[captcha here]</div> */}
 
           <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
             <button
@@ -388,8 +384,8 @@ function Field({
           name={name}
           autoComplete={autoComplete}
           required={required}
-          className={`w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 pl-${
-            icon ? "9" : "3"
+          className={`w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 ${
+            icon ? "pl-9" : "pl-3"
           } text-sm text-white outline-none ring-1 ring-white/10 placeholder:text-white/50 focus:ring-2 focus:ring-cyan-400/60`}
           placeholder=""
         />
@@ -506,7 +502,7 @@ function AreasCards() {
   ] as const;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
       {items.map((it) => (
         <Link
           key={it.title}
@@ -569,8 +565,8 @@ function Consultants() {
               className="object-cover"
             />
           </div>
-          <div className="flex-1">
-            <div className="text-sm font-semibold text-white">
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold text-white">
               {items[i].name}
             </div>
             <div className="text-xs text-white/70">{items[i].role}</div>
@@ -592,7 +588,7 @@ function Consultants() {
 function HoursAddress() {
   return (
     <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] ring-1 ring-white/10">
-      <div className="grid gap-0 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-0 sm:grid-cols-2">
         {/* Coluna de texto */}
         <div className="p-5">
           <div className="mb-2 text-sm font-semibold text-white">Horários</div>
@@ -632,12 +628,12 @@ function HoursAddress() {
         <div className="relative min-h-[280px]">
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3760.435056563561!2d-42.63794622470554!3d-19.5229269817759!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xa55698c0177e4f%3A0xb2b39d53a0fe8dc2!2sR.%20Luiz%20Rodrigues%20dos%20Santos%2C%2044%20-%20Todos%20Os%20Santos%2C%20Cel.%20Fabriciano%20-%20MG%2C%2035170-061!5e0!3m2!1sen!2sbr!4v1758893394442!5m2!1sen!2sbr"
-            className="absolute inset-0 h-full w-full border-0 rounded-br-3xl sm:rounded-tr-3xl"
+            className="absolute inset-0 h-full w-full rounded-br-3xl border-0 sm:rounded-tr-3xl"
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
-          <div className="pointer-events-none absolute inset-0 rounded-br-3xl sm:rounded-tr-3xl bg-gradient-to-t from-black/30" />
+          <div className="pointer-events-none absolute inset-0 rounded-br-3xl bg-gradient-to-t from-black/30 sm:rounded-tr-3xl" />
         </div>
       </div>
     </section>
@@ -680,7 +676,7 @@ function Faq() {
   );
 }
 
-/* ==== Icons (mínimos para evitar imports demais) ==== */
+/* ==== Icons ==== */
 function GraduationIcon() {
   return (
     <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
