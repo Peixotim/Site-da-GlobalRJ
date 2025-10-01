@@ -58,9 +58,6 @@ const topics = [
   "Outros",
 ] as const;
 
-/* =========================
-   Página
-========================= */
 export default function ContatoPage() {
   return (
     <LazyMotion features={domAnimation} strict>
@@ -284,20 +281,20 @@ function ContactForm() {
           <Field
             icon={<Briefcase className="h-4 w-4 text-white/70" />}
             label="Empresa (opcional)"
-            name="company"
+            name="enterprise"
             autoComplete="organization"
           />
 
           <Select
             label="Assunto"
-            name="topic"
+            name="Foco"
             options={topics}
             className="sm:col-span-2"
           />
 
           <Textarea
             label="Mensagem"
-            name="message"
+            name="body"
             placeholder="Conte brevemente sua necessidade, prazos e objetivos."
             rows={5}
             className="sm:col-span-2"
