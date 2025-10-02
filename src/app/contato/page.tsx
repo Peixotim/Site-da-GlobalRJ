@@ -199,24 +199,57 @@ function ContactForm() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (botRef.current?.value) return;
+    if (botRef.current?.value) return; // honeypot
 
     const fd = new FormData(e.currentTarget);
-    const payload = Object.fromEntries(fd.entries());
+    const payload = {
+      name: String(fd.get("name") || ""),
+      email: String(fd.get("email") || ""),
+      phone: String(fd.get("phone") || ""),
+      enterprise: String(fd.get("enterprise") || ""),
+      foco: String(fd.get("foco") || "Outros"),
+      body: String(fd.get("body") || ""),
+    };
+
+    // texto para fallback (WhatsApp)
+    const whatsappText =
+      `Olá! Vim pelo site e não consegui enviar o formulário.\n\n` +
+      `Nome: ${payload.name}\n` +
+      `E-mail: ${payload.email}\n` +
+      `Telefone: ${payload.phone}\n` +
+      `Empresa: ${payload.enterprise}\n` +
+      `Assunto: ${payload.foco}\n\n` +
+      `Mensagem:\n${payload.body}`;
+
+    const WHATS_URL = `https://wa.me/550000000000?text=${encodeURIComponent( //Trocar depois numero whatsapp rjglobal
+      whatsappText
+    )}`;
 
     setSending(true);
     setOk(null);
     try {
-      const res = await fetch("/api/contact", {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 12000); // timeout 12s
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: ctrl.signal,
       });
-      if (!res.ok) throw new Error("fail");
+      clearTimeout(to);
+
+      if (!res.ok) {
+        // fallback automático
+        window.location.href = WHATS_URL;
+        return;
+      }
+
       setOk("success");
       (e.currentTarget as HTMLFormElement).reset();
     } catch {
-      setOk("error");
+      // offline/CORS/timeout -> WhatsApp
+      window.location.href = WHATS_URL;
     } finally {
       setSending(false);
     }
@@ -287,7 +320,7 @@ function ContactForm() {
 
           <Select
             label="Assunto"
-            name="Foco"
+            name="foco"
             options={topics}
             className="sm:col-span-2"
           />
