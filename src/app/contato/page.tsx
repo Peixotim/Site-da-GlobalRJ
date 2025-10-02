@@ -1,8 +1,7 @@
-// app/contato/page.tsx
 "use client";
 
 import { useRef, useState } from "react";
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -26,10 +25,11 @@ import {
   ExternalLink,
   Wrench,
   GraduationCap,
+  Loader2,
 } from "lucide-react";
 
 /* =========================
-   Mock de consultores
+   Dados
 ========================= */
 const CONSULTANTS = [
   {
@@ -50,20 +50,31 @@ const CONSULTANTS = [
    Helpers
 ========================= */
 const ease = [0.22, 1, 0.36, 1] as const;
+
+// value = ENUM aceito pelo backend | label = texto da UI
 const topics = [
-  "Pós-Graduação",
-  "Cursos Técnicos",
-  "Parcerias",
-  "Imprensa",
-  "Outros",
+  { label: "Pós-Graduação", value: "POSGRADUCAO" },
+  { label: "Cursos Técnicos", value: "TECNICOS" },
+  { label: "Parcerias", value: "PARCERIAS" },
+  { label: "Imprensa", value: "IMPRENSA" },
+  { label: "Outros", value: "OUTROS" },
 ] as const;
 
+type Toast = null | {
+  type: "success" | "error";
+  message: string;
+  actionLabel?: string;
+  actionHref?: string;
+};
+
+/* =========================
+   Página
+========================= */
 export default function ContatoPage() {
   return (
     <LazyMotion features={domAnimation} strict>
-      {/* opcional global no layout: <html className="overflow-x-clip"><body className="overflow-x-clip" /> */}
       <main className="relative min-h-[100dvh] overflow-x-clip px-4 sm:px-6 lg:px-8">
-        {/* Aurora sutil CLIPADA */}
+        {/* Aurora */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(1100px_520px_at_90%_-10%,rgba(56,189,248,0.14),transparent)]" />
           <div className="absolute left-1/2 top-0 h-[120vh] w-[140%] -translate-x-1/2 -rotate-[6deg] bg-[conic-gradient(from_210deg_at_50%_50%,rgba(168,85,247,0.12),rgba(56,189,248,0.12),rgba(168,85,247,0.12))] opacity-40" />
@@ -120,10 +131,7 @@ export default function ContatoPage() {
         {/* GRID principal: form + info */}
         <section className="mx-auto mt-8 w-full max-w-6xl">
           <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            {/* Form */}
             <ContactForm />
-
-            {/* Lateral */}
             <aside className="space-y-6">
               <AreasCards />
               <Consultants />
@@ -133,7 +141,6 @@ export default function ContatoPage() {
           </div>
         </section>
 
-        {/* rodapé simples */}
         <section className="mx-auto my-10 w-full max-w-6xl text-sm text-white/70">
           <p>
             Precisa de algo específico?{" "}
@@ -194,7 +201,7 @@ function QuickAction({
 /* ---- Formulário ---- */
 function ContactForm() {
   const [sending, setSending] = useState(false);
-  const [ok, setOk] = useState<null | "success" | "error">(null);
+  const [toast, setToast] = useState<Toast>(null);
   const botRef = useRef<HTMLInputElement>(null); // honeypot
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -202,34 +209,32 @@ function ContactForm() {
     if (botRef.current?.value) return; // honeypot
 
     const fd = new FormData(e.currentTarget);
+
+    // vem como value do option (enum)
+    const focoEnum = String(fd.get("foco") || "OUTROS");
+    // label para WhatsApp
+    const focoLabel =
+      topics.find((t) => t.value === focoEnum)?.label ?? "Outros";
+
     const payload = {
       name: String(fd.get("name") || ""),
       email: String(fd.get("email") || ""),
       phone: String(fd.get("phone") || ""),
       enterprise: String(fd.get("enterprise") || ""),
-      foco: String(fd.get("foco") || "Outros"),
+      foco: focoEnum, // <-- ENUM aceito pelo backend
       body: String(fd.get("body") || ""),
     };
 
-    // texto para fallback (WhatsApp)
-    const whatsappText =
-      `Olá! Vim pelo site e não consegui enviar o formulário.\n\n` +
-      `Nome: ${payload.name}\n` +
-      `E-mail: ${payload.email}\n` +
-      `Telefone: ${payload.phone}\n` +
-      `Empresa: ${payload.enterprise}\n` +
-      `Assunto: ${payload.foco}\n\n` +
-      `Mensagem:\n${payload.body}`;
-
-    const WHATS_URL = `https://wa.me/550000000000?text=${encodeURIComponent( //Trocar depois numero whatsapp rjglobal
-      whatsappText
+    const WHATS_URL = `https://wa.me/550000000000?text=${encodeURIComponent(
+      `Olá! Vim pelo site e não consegui enviar o formulário.\n\nNome: ${payload.name}\nE-mail: ${payload.email}\nTelefone: ${payload.phone}\nEmpresa: ${payload.enterprise}\nAssunto: ${focoLabel}\n\nMensagem:\n${payload.body}`
     )}`;
 
     setSending(true);
-    setOk(null);
+    setToast(null);
+
     try {
       const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 12000); // timeout 12s
+      const to = setTimeout(() => ctrl.abort(), 12000);
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/email`, {
         method: "POST",
@@ -239,19 +244,17 @@ function ContactForm() {
       });
       clearTimeout(to);
 
-      if (!res.ok) {
-        // fallback automático
-        window.location.href = WHATS_URL;
-        return;
-      }
-
-      setOk("success");
       (e.currentTarget as HTMLFormElement).reset();
+      setToast({
+        type: "success",
+        message: "Mensagem enviada! Em breve entraremos em contato.",
+      });
     } catch {
-      // offline/CORS/timeout -> WhatsApp
-      window.location.href = WHATS_URL;
     } finally {
       setSending(false);
+      setTimeout(() => {
+        setToast((t) => (t?.type === "success" ? null : t));
+      }, 3500);
     }
   }
 
@@ -360,15 +363,18 @@ function ContactForm() {
               disabled={sending}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500/25 via-cyan-400/15 to-fuchsia-500/25 px-5 py-3 text-sm font-semibold text-white ring-1 ring-white/10 transition hover:from-cyan-500/35 hover:to-fuchsia-500/35 disabled:opacity-60"
             >
-              <Send className="h-4 w-4" />
-              {sending ? "Enviando..." : "Enviar mensagem"}
+              {sending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Enviar mensagem
+                </>
+              )}
             </button>
-            {ok === "success" && (
-              <SuccessPill text="Mensagem enviada! Em breve entraremos em contato." />
-            )}
-            {ok === "error" && (
-              <ErrorPill text="Não foi possível enviar. Tente novamente." />
-            )}
           </div>
 
           <p className="sm:col-span-2 text-xs text-white/60">
@@ -377,10 +383,56 @@ function ContactForm() {
           </p>
         </form>
       </div>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <m.div
+            role={toast.type === "error" ? "alert" : "status"}
+            aria-live={toast.type === "error" ? "assertive" : "polite"}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.35 }}
+            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl px-4 py-3 text-white shadow-lg backdrop-blur ring-1 ${
+              toast.type === "success"
+                ? "bg-emerald-500/90 ring-emerald-300/40"
+                : "bg-red-500/90 ring-red-300/40"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle2 className="h-5 w-5" />
+            ) : (
+              <Info className="h-5 w-5" />
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+            {toast.actionHref && toast.actionLabel && (
+              <a
+                href={toast.actionHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 inline-flex items-center rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold hover:bg-white/30"
+              >
+                {toast.actionLabel}
+              </a>
+            )}
+            <button
+              onClick={() => setToast(null)}
+              className="ml-1 text-xs/none opacity-80 hover:opacity-100"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          </m.div>
+        )}
+      </AnimatePresence>
     </m.section>
   );
 }
 
+/* =========================
+   Campos
+========================= */
 function Field({
   label,
   name,
@@ -432,7 +484,7 @@ function Select({
 }: {
   label: string;
   name: string;
-  options: readonly string[];
+  options: readonly { label: string; value: string }[];
   className?: string;
 }) {
   return (
@@ -443,10 +495,11 @@ function Select({
       <select
         name={name}
         className="w-full appearance-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none ring-1 ring-white/10 placeholder:text-white/50 focus:ring-2 focus:ring-cyan-400/60"
+        defaultValue={options[0]?.value}
       >
         {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
+          <option key={o.value} value={o.value}>
+            {o.label}
           </option>
         ))}
       </select>
@@ -485,24 +538,9 @@ function Textarea({
   );
 }
 
-function SuccessPill({ text }: { text: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-200 ring-1 ring-emerald-300/25">
-      <CheckCircle2 className="h-4 w-4" />
-      {text}
-    </span>
-  );
-}
-function ErrorPill({ text }: { text: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-red-400/15 px-3 py-1 text-xs font-semibold text-red-200 ring-1 ring-red-300/25">
-      <Info className="h-4 w-4" />
-      {text}
-    </span>
-  );
-}
-
-/* ---- Lateral ---- */
+/* =========================
+   Lateral
+========================= */
 function AreasCards() {
   const items = [
     {
@@ -604,6 +642,7 @@ function Consultants() {
           <Link
             href={items[i].linkedin}
             target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-xs text-white ring-1 ring-white/15 hover:bg-white/15"
           >
             <Linkedin className="h-3.5 w-3.5" />
@@ -619,7 +658,6 @@ function HoursAddress() {
   return (
     <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] ring-1 ring-white/10">
       <div className="grid min-w-0 gap-0 sm:grid-cols-2">
-        {/* Coluna de texto */}
         <div className="p-5">
           <div className="mb-2 text-sm font-semibold text-white">Horários</div>
           <div className="space-y-1 text-xs text-white/80">
@@ -648,13 +686,13 @@ function HoursAddress() {
           <Link
             href="https://maps.google.com/?q=R.+Luiz+Rodrigues+dos+Santos,+44+-+Cel.+Fabriciano"
             target="_blank"
+            rel="noopener noreferrer"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold text-white ring-1 ring-white/15 hover:bg-white/15"
           >
             Abrir no Maps <ExternalLink className="h-3.5 w-3.5" />
           </Link>
         </div>
 
-        {/* Coluna do mapa responsivo */}
         <div className="relative min-h-[280px]">
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3760.435056563561!2d-42.63794622470554!3d-19.5229269817759!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xa55698c0177e4f%3A0xb2b39d53a0fe8dc2!2sR.%20Luiz%20Rodrigues%20dos%20Santos%2C%2044%20-%20Todos%20Os%20Santos%2C%20Cel.%20Fabriciano%20-%20MG%2C%2035170-061!5e0!3m2!1sen!2sbr!4v1758893394442!5m2!1sen!2sbr"
@@ -706,7 +744,7 @@ function Faq() {
   );
 }
 
-/* ==== Icons ==== */
+/* ==== Icons / Itens ==== */
 function GraduationIcon() {
   return (
     <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
