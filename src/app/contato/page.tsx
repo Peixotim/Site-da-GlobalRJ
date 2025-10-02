@@ -27,6 +27,7 @@ import {
   GraduationCap,
   Loader2,
 } from "lucide-react";
+import { Toaster, toast } from "sonner";
 
 /* =========================
    Dados
@@ -60,13 +61,6 @@ const topics = [
   { label: "Outros", value: "OUTROS" },
 ] as const;
 
-type Toast = null | {
-  type: "success" | "error";
-  message: string;
-  actionLabel?: string;
-  actionHref?: string;
-};
-
 /* =========================
    Página
 ========================= */
@@ -74,6 +68,31 @@ export default function ContatoPage() {
   return (
     <LazyMotion features={domAnimation} strict>
       <main className="relative min-h-[100dvh] overflow-x-clip px-4 sm:px-6 lg:px-8">
+        {/* Toaster global (vidro + gradiente alinhado ao tema) */}
+        <Toaster
+          position="bottom-right"
+          theme="dark"
+          closeButton
+          expand
+          toastOptions={{
+            style: {
+              background: "rgba(8, 12, 20, 0.78)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              color: "white",
+              boxShadow:
+                "0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03)",
+            },
+            className:
+              "ring-1 ring-white/10 data-[type=success]:!bg-[rgba(10,18,28,0.86)] data-[type=success]:!ring-white/10",
+          }}
+          icons={{
+            success: <CheckCircle2 className="h-5 w-5 text-cyan-300" />,
+            info: <Info className="h-5 w-5 text-cyan-300" />,
+          }}
+        />
+
         {/* Aurora */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(1100px_520px_at_90%_-10%,rgba(56,189,248,0.14),transparent)]" />
@@ -198,10 +217,36 @@ function QuickAction({
   );
 }
 
-/* ---- Formulário ---- */
+/* ---- Loader linear animado (top bar) ---- */
+function LinearLoader({ visible }: { visible: boolean }) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <m.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="pointer-events-none absolute inset-x-0 top-0 z-20 h-0.5 overflow-hidden"
+        >
+          <m.div
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{
+              repeat: Infinity,
+              duration: 1.15,
+              ease: "easeInOut",
+            }}
+            className="h-full w-1/3 bg-gradient-to-r from-cyan-300 via-white to-fuchsia-400"
+          />
+        </m.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ---- Formulário (UX otimista + Sonner + loader) ---- */
 function ContactForm() {
   const [sending, setSending] = useState(false);
-  const [toast, setToast] = useState<Toast>(null);
   const botRef = useRef<HTMLInputElement>(null); // honeypot
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -210,9 +255,9 @@ function ContactForm() {
 
     const fd = new FormData(e.currentTarget);
 
-    // vem como value do option (enum)
+    // ENUM aceito pelo backend
     const focoEnum = String(fd.get("foco") || "OUTROS");
-    // label para WhatsApp
+    // label para o texto do WhatsApp
     const focoLabel =
       topics.find((t) => t.value === focoEnum)?.label ?? "Outros";
 
@@ -221,41 +266,73 @@ function ContactForm() {
       email: String(fd.get("email") || ""),
       phone: String(fd.get("phone") || ""),
       enterprise: String(fd.get("enterprise") || ""),
-      foco: focoEnum, // <-- ENUM aceito pelo backend
+      foco: focoEnum,
       body: String(fd.get("body") || ""),
     };
 
+    // mensagem pronta para WhatsApp
     const WHATS_URL = `https://wa.me/550000000000?text=${encodeURIComponent(
-      `Olá! Vim pelo site e não consegui enviar o formulário.\n\nNome: ${payload.name}\nE-mail: ${payload.email}\nTelefone: ${payload.phone}\nEmpresa: ${payload.enterprise}\nAssunto: ${focoLabel}\n\nMensagem:\n${payload.body}`
+      `Olá! Vim pelo site e gostaria de falar com um consultor.\n\nNome: ${payload.name}\nE-mail: ${payload.email}\nTelefone: ${payload.phone}\nEmpresa: ${payload.enterprise}\nAssunto: ${focoLabel}\n\nMensagem:\n${payload.body}`
     )}`;
 
     setSending(true);
-    setToast(null);
 
-    try {
-      const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 12000);
+    // Toast de loading com as cores do tema
+    const loadingId = toast.loading("Enviando sua mensagem...", {
+      description: "Estamos processando seu contato com carinho ✨",
+      duration: 12000,
+      className:
+        "bg-[rgba(10,18,28,0.86)] ring-1 ring-white/10 backdrop-blur-lg",
+      style: {
+        background:
+          "linear-gradient(180deg, rgba(14,22,36,0.92), rgba(10,16,26,0.88))",
+        border: "1px solid rgba(255,255,255,0.08)",
+      },
+    });
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: ctrl.signal,
-      });
-      clearTimeout(to);
+    // Dispara a requisição (UX otimista: resposta do usuário já é positiva)
+    (async () => {
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 12000);
 
-      (e.currentTarget as HTMLFormElement).reset();
-      setToast({
-        type: "success",
-        message: "Mensagem enviada! Em breve entraremos em contato.",
-      });
-    } catch {
-    } finally {
-      setSending(false);
-      setTimeout(() => {
-        setToast((t) => (t?.type === "success" ? null : t));
-      }, 3500);
-    }
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: ctrl.signal,
+        }).catch((err) => console.error("Falha ao enviar:", err));
+
+        clearTimeout(to);
+      } catch (err) {
+        console.error("Falha ao enviar:", err);
+      } finally {
+        toast.dismiss(loadingId);
+        toast.success("Mensagem enviada com sucesso! 💜", {
+          description:
+            "Recebemos seu contato e retornaremos em breve. Se preferir, fale agora pelo WhatsApp.",
+          duration: 6000,
+          className:
+            "bg-[rgba(10,18,28,0.86)] ring-1 ring-white/10 backdrop-blur-lg",
+          style: {
+            background:
+              "linear-gradient(180deg, rgba(12,22,34,0.96), rgba(10,16,26,0.92))",
+            border: "1px solid rgba(56,189,248,0.20)", // ciano suave no contorno
+            boxShadow:
+              "0 0 0 1px rgba(168,85,247,0.15) inset, 0 10px 30px rgba(0,0,0,0.35)",
+          },
+          action: {
+            label: "Abrir WhatsApp",
+            onClick: () => window.open(WHATS_URL, "_blank"),
+          },
+        });
+
+        setSending(false);
+      }
+    })();
+
+    // limpa visualmente o form já na UX otimista
+    (e.currentTarget as HTMLFormElement).reset();
   }
 
   return (
@@ -264,16 +341,19 @@ function ContactForm() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.35 }}
       transition={{ duration: 0.5, ease }}
-      className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] ring-1 ring-white/10"
+      className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] ring-1 ring-white/10"
       aria-labelledby="contato-form"
     >
+      {/* Loader linear no topo do card */}
+      <LinearLoader visible={sending} />
+
       <div className="grid gap-6 p-6 sm:p-8">
         <div>
           <h2 id="contato-form" className="text-xl font-extrabold text-white">
             Envie uma mensagem
           </h2>
           <p className="text-sm text-white/75">
-            Responderemos em até 1 dia útil.
+            Respondemos rápido com um diagnóstico inicial e próximos passos.
           </p>
         </div>
 
@@ -331,7 +411,7 @@ function ContactForm() {
           <Textarea
             label="Mensagem"
             name="body"
-            placeholder="Conte brevemente sua necessidade, prazos e objetivos."
+            placeholder="Resuma sua necessidade, prazos e objetivos."
             rows={5}
             className="sm:col-span-2"
             required
@@ -383,49 +463,6 @@ function ContactForm() {
           </p>
         </form>
       </div>
-
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <m.div
-            role={toast.type === "error" ? "alert" : "status"}
-            aria-live={toast.type === "error" ? "assertive" : "polite"}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.35 }}
-            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl px-4 py-3 text-white shadow-lg backdrop-blur ring-1 ${
-              toast.type === "success"
-                ? "bg-emerald-500/90 ring-emerald-300/40"
-                : "bg-red-500/90 ring-red-300/40"
-            }`}
-          >
-            {toast.type === "success" ? (
-              <CheckCircle2 className="h-5 w-5" />
-            ) : (
-              <Info className="h-5 w-5" />
-            )}
-            <span className="text-sm font-medium">{toast.message}</span>
-            {toast.actionHref && toast.actionLabel && (
-              <a
-                href={toast.actionHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 inline-flex items-center rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold hover:bg-white/30"
-              >
-                {toast.actionLabel}
-              </a>
-            )}
-            <button
-              onClick={() => setToast(null)}
-              className="ml-1 text-xs/none opacity-80 hover:opacity-100"
-              aria-label="Fechar"
-            >
-              ✕
-            </button>
-          </m.div>
-        )}
-      </AnimatePresence>
     </m.section>
   );
 }
