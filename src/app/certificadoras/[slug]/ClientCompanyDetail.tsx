@@ -174,9 +174,6 @@ function HeroSplit({ c }: { c: Certificadora }) {
   );
 }
 
-/* ======================================================================
-   LAYOUT — coluna principal + “rail” lateral fixo (ações e contatos)
-======================================================================== */
 function Rail({ c }: { c: Certificadora }) {
   const socials = useMemo(() => {
     const items: {

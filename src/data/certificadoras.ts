@@ -55,7 +55,7 @@ export const certificadoras: Certificadora[] = [
     employeesRange: "51–200",
     accreditations: ["Catálogo Nacional de Cursos Técnicos"],
     contacts: {
-      email: "contato@globaltec.edu.br",
+      email: "suporte@gruporjglobal.com.br",
       phone: "+55 (31) 0000-0000",
       site: "https://globaltec.edu.br",
       whatsapp: "https://wa.me/553100000000",

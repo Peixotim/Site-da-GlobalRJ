@@ -125,9 +125,9 @@ export default function ContatoPage() {
             {/* Ações rápidas */}
             <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
               <QuickAction
-                href="mailto:contato@rjglobal.com"
+                href="mailto:suporte@gruporjglobal.com"
                 Icon={Mail}
-                label="contato@rjglobal.com"
+                label="suporte@gruporjglobal.com"
                 sub="E-mail"
               />
               <QuickAction
