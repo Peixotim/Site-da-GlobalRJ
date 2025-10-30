@@ -25,7 +25,6 @@ type ShowcaseProps = {
 /* Defaults (pode trocar via props) */
 const LOGOS_POS_DEFAULT = [
   { src: "/logosPos/fc.png", alt: "Empresa POS 1" },
-  { src: "/logosPos/logoNacional.webp", alt: "Empresa POS 2" },
   { src: "/logosPos/fclest.png", alt: "Empresa POS 3" },
   { src: "/logosPos/ig.png", alt: "Empresa POS 4" },
   { src: "/logosPos/edminas.png", alt: "Empresa POS 4" },
