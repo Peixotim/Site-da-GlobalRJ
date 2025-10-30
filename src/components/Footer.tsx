@@ -153,7 +153,7 @@ export default function FooterPremium() {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-white/50" />
-                <span>contato@rjglobal.com</span>
+                <span>suporte@gruporjglobal.com.br</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="h-6 w-6 text-white/50" />
