@@ -18,27 +18,35 @@ type RibbonProps = {
 type ShowcaseProps = {
   logosPos?: readonly Logo[];
   logosTec?: readonly Logo[];
+  parceiros?: readonly Logo[];
   className?: string;
 };
 
 /* Defaults (pode trocar via props) */
 const LOGOS_POS_DEFAULT = [
-  { src: "/logosPos/logoEducaMais.webp", alt: "Empresa POS 1" },
+  { src: "/logosPos/fc.png", alt: "Empresa POS 1" },
   { src: "/logosPos/logoNacional.webp", alt: "Empresa POS 2" },
-  { src: "/logosPos/logoEducaMais.webp", alt: "Empresa POS 3" },
-  { src: "/globalrj.webp", alt: "Empresa POS 4" },
+  { src: "/logosPos/fclest.png", alt: "Empresa POS 3" },
+  { src: "/logosPos/ig.png", alt: "Empresa POS 4" },
+  { src: "/logosPos/edminas.png", alt: "Empresa POS 4" },
+  { src: "/logosPos/educavalepos.png", alt: "Empresa POS 4" },
 ] as const;
 
 const LOGOS_TEC_DEFAULT = [
   { src: "/logosTecnico/logoEduTec.webp", alt: "Empresa TEC 1" },
-  { src: "/globalrj.webp", alt: "Empresa TEC 2" },
-  { src: "/globalrj.webp", alt: "Empresa TEC 3" },
-  { src: "/globalrj.webp", alt: "Empresa TEC 4" },
+  { src: "/logosTecnico/educavales.png", alt: "Empresa TEC 2" },
+  { src: "/logosTecnico/edt.png", alt: "Empresa TEC 3" },
+  { src: "/logosTecnico/grandeminas.png", alt: "Empresa TEC 4" },
+  { src: "/logosTecnico/nacional.png", alt: "Empresa TEC " },
+  { src: "/logosTecnico/tecminas.png", alt: "Empresa TEC " },
 ] as const;
+
+
 
 export default function EmpresasShowcase({
   logosPos = LOGOS_POS_DEFAULT,
   logosTec = LOGOS_TEC_DEFAULT,
+  
   className = "",
 }: ShowcaseProps) {
   return (
@@ -61,6 +69,7 @@ export default function EmpresasShowcase({
         cardHeightClass="h-32 md:h-36 lg:h-40" // Altura dos cards aumentada
         gapClass="gap-10 lg:gap-14 xl:gap-16" // Espaçamento entre cards aumentado
       />
+
     </section>
   );
 }

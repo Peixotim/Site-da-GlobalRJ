@@ -32,7 +32,7 @@ type Props = {
 
 const DEFAULT_ITEMS: readonly CertifierItem[] = [
   {
-    logo: "/Certificadoras/globalrj.webp",
+    logo: "/Certificadoras/globaltec.png",
     title: "GLOBALTEC",
     subtitle: "Certificadora",
   },
